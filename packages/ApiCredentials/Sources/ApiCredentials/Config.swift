@@ -1,12 +1,18 @@
 import Cocoa
 
 public final class ApiEnvironment {
-    public static var apiId:Int32 {
-        return 9
-    }
-    public static var apiHash:String {
-        return "3975f648bb682ee889f35483bc618d1c"
-    }
+    public static let apiId: Int32 = {
+        guard let value = Configuration.value(for: .apiId).flatMap({ Int32($0) }), value > 0 else {
+            fatalError("TAU_API_ID is not set: copy Telegram-Mac/secrets.xcconfig.example to Telegram-Mac/secrets.xcconfig")
+        }
+        return value
+    }()
+    public static let apiHash: String = {
+        guard let value = Configuration.value(for: .apiHash), value.count == 32 else {
+            fatalError("TAU_API_HASH is not set: copy Telegram-Mac/secrets.xcconfig.example to Telegram-Mac/secrets.xcconfig")
+        }
+        return value
+    }()
     
     public static var bundleId: String {
         return "ru.keepcoder.Telegram"

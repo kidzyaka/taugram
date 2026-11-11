@@ -89,6 +89,10 @@
 	<true/>
 	<key>SOURCE</key>
 	<string>${SOURCE}</string>
+	<key>TauApiId</key>
+	<string>${TAU_API_ID}</string>
+	<key>TauApiHash</key>
+	<string>${TAU_API_HASH}</string>
 	<key>SUFeedURL</key>
 	<string>${SFEED_URL}</string>
 	<key>SUPublicDSAKeyFile</key>

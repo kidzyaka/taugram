@@ -29,3 +29,6 @@ core-xprojects/tlottie/build
 .swiftpm/
 .ci-build-logs/
 *.profraw
+
+# Taugram API credentials (see Telegram-Mac/secrets.xcconfig.example)
+Telegram-Mac/secrets.xcconfig
