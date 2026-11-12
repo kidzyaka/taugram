@@ -1,83 +1,107 @@
 <div align="center">
   <img src="Telegram-Mac/Assets.xcassets/AppIcon.appiconset/Logo_1024.png"
-      width="125" 
-      height="125">
-  
-  <h2 align="center">Telegram for macOS</h2>
+      width="128"
+      height="128"
+      alt="Taugram icon">
+
+  <h1 align="center">Taugram</h1>
+
+  <p>An unofficial Telegram client for macOS with ghost mode, saved deleted messages, chat locks and deep theming.</p>
 </div>
 
-![Telegram macOS screenshot](images/tg.png)
+Taugram is a fork of [Telegram for macOS](https://github.com/macosswift/telegram) in the spirit of AyuGram and exteraGram. It does everything the official app does and adds its own settings screen: **Settings → Taugram**.
 
-[**Telegram**](https://telegram.org) is a messaging app with a focus on speed and security. It’s superfast, simple, and free! This repo contains the official source code for [Telegram for macOS](https://macos.telegram.org/).
+Taugram is not affiliated with Telegram.
 
-## Get it
+## Features
 
-[![Download on the Mac App Store](images/mas_badge.png)](https://itunes.apple.com/us/app/telegram/id747648890?mt=12)
+### Everyday
 
-### Using `mas-cli`
+These are always available.
 
-```
-mas install 747648890
-```
+| Feature | What it does |
+|---|---|
+| **OLED mode** | True black backgrounds with no blur. The theme stays locked until you turn the mode off, then your previous theme comes back. |
+| **Color editor** | Change every color of the current theme and see the result across the whole app as you pick. Import and export `.palette` files. |
+| **App icons** | Classic, Ocean, Midnight, Synthwave, Terminal and more, without Telegram Premium. |
+| **Chat lock** | Hide chosen chats behind a passcode, with Touch ID per chat if you want it. Locked chats show no previews in the chat list or in notifications. |
+| **ID and data center** | Profiles show the ID in Bot API format and the data center. Click the ID to copy it. |
+| **Seconds in message time** | Message timestamps show seconds. |
+| **Hide stories** | Removes stories from the chat list. |
 
-### Manual download
+Chat lock protects the interface, not the disk. The local database is encrypted only when the app passcode is on.
 
-If you would like, you can [download the non-MAS version](https://telegram.org/dl/macos).
+### Dangerous
 
-You can also [download the beta version](https://telegram.org/dl/macos/beta) if you want to try the latest features and you are prepared for bugs and crashes. If you are running the beta, join the [beta testing chat on Telegram](https://t.me/macswift) to report bugs.
+These are hidden until you accept the risk. See [Risks](#risks).
 
-## Contributors
+| Feature | What it does |
+|---|---|
+| **Ghost mode** | Stops sending read receipts, online status and typing. Stories, voice messages and mentions aren't marked as seen, and channel views aren't counted. Each part has its own switch; ⌥⌘G toggles them all. |
+| **Deleted messages** | Messages that others delete stay in the chat, marked as deleted with the time of deletion. |
+| **Edit history** | Keeps up to 50 earlier versions of an edited message. Open them from the message menu. |
+| **Protected content** | Copy and save from chats that restrict it. Forwarding a protected message sends a copy instead. |
+| **Self-destructing media** | View self-destructing photos and videos on the Mac, and open them without telling the sender. Secret chats have a separate switch. |
 
-### Contributors on GitHub
-See [this repository’s contributors graph](https://github.com/macosswift/telegram/graphs/contributors).
+### In progress
 
-### Bugs and Suggestions
-You can report bug or suggestions feature for Telegram for macOS on [Telegram’s Bugs & Suggestions platform](https://bugs.telegram.org). Read [the platform tip](https://bugs.telegram.org/c/746) before creating first card.
+- An MCP server so that AI agents can read your chats and, with your approval, send messages. It is local and off by default.
+- A mark for Taugram's creator and contributors.
+- Signed builds with automatic updates.
 
-### Translations
-You can help translate Telegram for macOS on [Telegram’s translations platform](https://translations.telegram.org). Pick your language, then look for the macOS translation set.
+The full plan is in [docs/taugram/ROADMAP.md](docs/taugram/ROADMAP.md) (in Russian).
 
-<!--### Third-party libraries-->
-<!--See [LIBRARIES](LIBRARIES.md).-->
+## Risks
 
-## Permissions
-Telegram strives to protect your privacy.  This app asks for as few permissions as possible:
+The dangerous features break the [Telegram API Terms of Service](https://core.telegram.org/api/terms). Telegram can restrict or ban an account that uses them. You use them at your own risk.
 
-* **Microphone**: You can send voice messages and make audio calls with Telegram.
-* **Camera**: You can set your profile picture using your Mac’s iSight camera.
-* **Location**: You can send your location to friends.
-* **Outgoing network connections**: Telegram needs to connect to the internet to send your messages to your friends.
-* **Incoming network connections**: Telegram needs to accept incoming connections for peer-to-peer voice calls.
-* **User-selected files**: You can save files or images to your Mac.
-* **Downloads folder**: Telegram can automatically download files or images you receive.
+Taugram asks about this once, on first launch. **Enable** stays inactive for 10 seconds, and the dialog can't be dismissed without choosing. If you choose **Disable**, the dangerous features stay hidden.
 
-## Shortcuts
-With [Shortcuts](https://github.com/macosswift/telegram/wiki) you can learn how easy is navigate using your devices.
+You can change the decision later in **Settings → Taugram → Dangerous Features**. That switch also turns off every dangerous feature at once.
 
-## License
-Telegram for macOS is licensed under the GNU Public License, version 2.0. See [LICENSE](LICENSE) for more information.
+## Privacy
 
-## Forking
-You can fork this application and make something awesome! Make sure that your fork follows these five requirements:
-
-1. **Do** [get your own API ID](https://core.telegram.org/api/obtaining_api_id).
-2. **Don’t** call your fork **Telegram** — or at least make sure your users understand that yours is unofficial.
-3. **Don’t** use our standard logo (white paper plane in a blue circle) for your fork.
-3. **Do** read and follow our [security guidelines](https://core.telegram.org/mtproto/security_guidelines) to make sure you take good care of your users’ data and protect their privacy.
-4. **Do** publish your code. The [GPL license](LICENSE) requires it!
+- Taugram has no servers of its own.
+- Taugram adds no analytics or crash reporting. The AppCenter and Firebase keys of the official app are removed.
+- Automatic updates are off until Taugram has its own update feed. To update, pull and rebuild.
 
 ## How to Build
 
-Quick start (full details, requirements and troubleshooting are in [INSTALL.md](INSTALL.md)):
+Full details, requirements and troubleshooting are in [INSTALL.md](INSTALL.md).
 
-1. Install Xcode 16 or newer, Homebrew and a Rust toolchain (rustup). On Xcode 27, apply the local changes in
-   [XCODE27.md](XCODE27.md) first: it supports macOS 12.0 and newer only, and the project targets 10.13.
+1. Install Xcode 16 or newer, Homebrew and a Rust toolchain (rustup). On Xcode 27, read [XCODE27.md](XCODE27.md) first.
 2. Clone with submodules:
+   ```bash
+   git clone --recurse-submodules https://github.com/kidzyaka/taugram.git
    ```
-   git clone --recurse-submodules https://github.com/macosswift/telegram.git
+3. Get your own `api_id` and `api_hash` at [my.telegram.org/apps](https://my.telegram.org/apps). The repository ships none, and the app stops at launch without them. Copy the template and fill them in:
+   ```bash
+   cp Telegram-Mac/secrets.xcconfig.example Telegram-Mac/secrets.xcconfig
    ```
-3. Prepare the machine and build the native libraries once:
-   ```
+4. Prepare the machine and build the native libraries once:
+   ```bash
    sh scripts/setup_build_env.sh --build
    ```
-4. Open `Telegram-Mac.xcworkspace` in Xcode and build the `Telegram` scheme.
+5. Open `Telegram-Mac.xcworkspace` in Xcode, select your own team for signing and build the `Telegram` scheme.
+
+## How the Fork Is Organized
+
+Taugram keeps its diff from upstream small, so that upstream updates merge cheaply.
+
+- Taugram's own code lives in `packages/TauSettings` and `packages/TauSettingsUI`.
+- Changes to TelegramCore and Postbox are kept as a patch, [scripts/telegram-ios-taugram.patch](scripts/telegram-ios-taugram.patch), on top of upstream's macOS patch. The `telegram-ios` submodule always points to an upstream commit.
+- Every edit in an upstream core file is marked with `// Taugram`.
+
+Conventions for working in this repository are in [AGENTS.md](AGENTS.md).
+
+## Contributing
+
+Report bugs and suggest features in [GitHub Issues](https://github.com/kidzyaka/taugram/issues). Please don't report Taugram bugs to Telegram.
+
+Pull requests follow [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+Taugram is licensed under the GNU General Public License, version 2.0. See [LICENSE](LICENSE).
+
+It is built on [Telegram for macOS](https://github.com/macosswift/telegram) by the Telegram team.
