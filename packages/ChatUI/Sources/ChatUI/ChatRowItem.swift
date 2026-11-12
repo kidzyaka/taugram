@@ -2628,7 +2628,7 @@ public class ChatRowItem: TableRowItem {
                 guestChatBadge = layout
             }
             
-            let dateFormatter = DateSelectorUtil.chatDateFormatter
+            let dateFormatter = tauChatTimeFormatter // Taugram
             let dateColor = isStateOverlayLayout ? stateOverlayTextColor : (!hasBubble ? theme.colors.grayText : theme.chat.grayText(isIncoming, object.renderType == .bubble))
             
             let dateFont: NSFont = renderType == .bubble ? .normal(.small) : .normal(.short)
@@ -2771,10 +2771,10 @@ public class ChatRowItem: TableRowItem {
                         let time: String
                         if Calendar.current.isDateInToday(editedDate) {
                             string = strings().chatRowEdited("\(strings().timeToday) \(strings().timeAt)")
-                            time = DateSelectorUtil.chatDateFormatter.string(from: editedDate)
+                            time = tauChatTimeFormatter.string(from: editedDate) // Taugram
                         } else if Calendar.current.isDateInYesterday(editedDate) {
                             string = strings().chatRowEdited("\(strings().timeYesterday) \(strings().timeAt)")
-                            time = DateSelectorUtil.chatDateFormatter.string(from: editedDate)
+                            time = tauChatTimeFormatter.string(from: editedDate) // Taugram
                         } else {
                             time = DateUtils.string(forLastSeen: editedAttribute.date)
                         }

@@ -6,25 +6,50 @@ import TelegramContext
 import TelegramTheme
 import TelegramUtils
 import InputDataUI
+import InAppSettings
+import GeneralRows
 import TauSettings
 
 private final class Arguments {
     let toggleDangerousFeatures: () -> Void
     let reviewConsent: () -> Void
-    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void) {
+    let selectAppIcon: (TauAppIcon) -> Void
+    let toggleMessageSeconds: () -> Void
+    let toggleHideStories: () -> Void
+    let togglePeerId: () -> Void
+    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void) {
         self.toggleDangerousFeatures = toggleDangerousFeatures
         self.reviewConsent = reviewConsent
+        self.selectAppIcon = selectAppIcon
+        self.toggleMessageSeconds = toggleMessageSeconds
+        self.toggleHideStories = toggleHideStories
+        self.togglePeerId = togglePeerId
     }
 }
 
 private struct State: Equatable {
     var values: TauSettingsValues
     var coreDangerousFeaturesAllowed: Bool
+    var canViewPeerId: Bool
 }
+
+private let tauAppIconThumbs: [TauAppIcon: CGImage] = {
+    var result: [TauAppIcon: CGImage] = [:]
+    for icon in TauAppIcon.allCases {
+        result[icon] = generateTauAppIconThumb(icon)
+    }
+    return result
+}()
 
 private let _id_dangerous_enabled = InputDataIdentifier("_id_dangerous_enabled")
 private let _id_dangerous_review = InputDataIdentifier("_id_dangerous_review")
 private let _id_debug_core = InputDataIdentifier("_id_debug_core")
+private let _id_message_seconds = InputDataIdentifier("_id_message_seconds")
+private let _id_hide_stories = InputDataIdentifier("_id_hide_stories")
+private let _id_peer_id = InputDataIdentifier("_id_peer_id")
+private func _id_app_icon(_ icon: TauAppIcon) -> InputDataIdentifier {
+    return InputDataIdentifier("_id_app_icon_\(icon.rawValue)")
+}
 
 private var appVersion: String {
     let info = Bundle.main.infoDictionary
@@ -44,6 +69,51 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
 
     //TODOLANG
     entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Taugram \(appVersion) is an unofficial client based on Telegram for macOS."), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+    index += 1
+
+    entries.append(.sectionId(sectionId, type: .normal))
+    sectionId += 1
+
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("APP ICON"), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+    index += 1
+
+    let selectedIcon = state.values.appIcon.flatMap(TauAppIcon.init(rawValue:)) ?? .classic
+    for icon in TauAppIcon.allCases {
+        entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_app_icon(icon), data: .init(name: icon.title, color: theme.colors.text, icon: tauAppIconThumbs[icon], type: .selectable(icon == selectedIcon), viewType: bestGeneralViewType(TauAppIcon.allCases, for: icon), action: {
+            arguments.selectAppIcon(icon)
+        })))
+        index += 1
+    }
+
+    entries.append(.sectionId(sectionId, type: .normal))
+    sectionId += 1
+
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("CHATS"), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+    index += 1
+
+    //TODOLANG
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_message_seconds, data: .init(name: "Seconds in Message Time", color: theme.colors.text, type: .switchable(state.values.showMessageSeconds), viewType: .firstItem, action: arguments.toggleMessageSeconds)))
+    index += 1
+
+    //TODOLANG
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_hide_stories, data: .init(name: "Hide Stories in Chat List", color: theme.colors.text, type: .switchable(state.values.hideStoriesInChatList), viewType: .lastItem, action: arguments.toggleHideStories)))
+    index += 1
+
+    entries.append(.sectionId(sectionId, type: .normal))
+    sectionId += 1
+
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("PROFILE"), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+    index += 1
+
+    //TODOLANG
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_peer_id, data: .init(name: "Show ID and Data Center", color: theme.colors.text, type: .switchable(state.canViewPeerId), viewType: .singleItem, action: arguments.togglePeerId)))
+    index += 1
+
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Profiles show the ID in Bot API format and the data center of the profile photo. Click the ID to copy it."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
     index += 1
 
     entries.append(.sectionId(sectionId, type: .normal))
@@ -100,6 +170,8 @@ public func TauSettingsController(context: any AccountContextProtocol) -> InputD
         return bestWindow(context, getController?())
     }
 
+    let canViewPeerId = ValuePromise(FastSettings.canViewPeerId, ignoreRepeated: true)
+
     let arguments = Arguments(toggleDangerousFeatures: {
         TauSettings.shared.update { current in
             var current = current
@@ -108,10 +180,32 @@ public func TauSettingsController(context: any AccountContextProtocol) -> InputD
         }
     }, reviewConsent: {
         showTauConsent(for: window)
+    }, selectAppIcon: { icon in
+        TauSettings.shared.update { current in
+            var current = current
+            current.appIcon = icon == .classic ? nil : icon.rawValue
+            return current
+        }
+        TauAppIconManager.applyStored()
+    }, toggleMessageSeconds: {
+        TauSettings.shared.update { current in
+            var current = current
+            current.showMessageSeconds = !current.showMessageSeconds
+            return current
+        }
+    }, toggleHideStories: {
+        TauSettings.shared.update { current in
+            var current = current
+            current.hideStoriesInChatList = !current.hideStoriesInChatList
+            return current
+        }
+    }, togglePeerId: {
+        FastSettings.canViewPeerId = !FastSettings.canViewPeerId
+        canViewPeerId.set(FastSettings.canViewPeerId)
     })
 
-    let signal = TauSettings.shared.signal |> map { values in
-        return State(values: values, coreDangerousFeaturesAllowed: TauCoreSettings.shared.dangerousFeaturesAllowed)
+    let signal = combineLatest(TauSettings.shared.signal, canViewPeerId.get()) |> map { values, canViewPeerId in
+        return State(values: values, coreDangerousFeaturesAllowed: TauCoreSettings.shared.dangerousFeaturesAllowed, canViewPeerId: canViewPeerId)
     } |> deliverOnPrepareQueue |> map { state in
         return InputDataSignalValue(entries: entries(state, arguments: arguments))
     }

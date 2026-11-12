@@ -1826,8 +1826,8 @@ enum GroupInfoEntry<Context: AccountContextProtocol>: PeerInfoEntry {
                 arguments.openQrStudio(from: control)
             })
         case let .peerId(_, value, viewType):
-            return  TextAndLabelItem(initialSize, stableId: stableId.hashValue, label: "PEER ID", copyMenuText: strings().textCopyText, text: value, context: arguments.context, viewType: viewType, canCopy: true, _copyToClipboard: {
-                arguments.copy(value)
+            return  TextAndLabelItem(initialSize, stableId: stableId.hashValue, label: TauPeerIdValue(value).label, copyMenuText: strings().textCopyText, text: TauPeerIdValue(value).id, context: arguments.context, viewType: viewType, canCopy: true, _copyToClipboard: { // Taugram
+                arguments.copy(TauPeerIdValue(value).id) // Taugram
             })
         case let .setTitle(_, text, viewType):
             return InputDataRowItem(initialSize, stableId: stableId.hashValue, mode: .plain, error: nil, viewType: viewType, currentText: text, placeholder: nil, inputPlaceholder: strings().peerInfoGroupTitlePleceholder, filter: { $0 }, updated: arguments.updateEditingName, limit: 255)
@@ -2345,7 +2345,7 @@ func groupInfoEntries<Context: AccountContextProtocol>(view: PeerView, arguments
                 aboutBlock.append(GroupInfoEntry<Context>.addressName(section: GroupInfoSection.desc.rawValue, name: usernames, viewType: .singleItem))
             }
             if FastSettings.canViewPeerId {
-                aboutBlock.append(GroupInfoEntry<Context>.peerId(section: GroupInfoSection.desc.rawValue, value: "\(group.id.id._internalGetInt64Value())", viewType: .singleItem))
+                aboutBlock.append(GroupInfoEntry<Context>.peerId(section: GroupInfoSection.desc.rawValue, value: TauPeerIdValue.encode(group), viewType: .singleItem)) // Taugram
             }
 
             applyBlock(aboutBlock)

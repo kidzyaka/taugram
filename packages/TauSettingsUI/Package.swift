@@ -10,6 +10,8 @@ let deps: [(String, String)] = [
     ("TelegramTheme", "../TelegramTheme"),
     ("TelegramUtils", "../TelegramUtils"),
     ("TauSettings", "../TauSettings"),
+    ("InAppSettings", "../InAppSettings"),
+    ("GeneralRows", "../GeneralRows"),
 ]
 
 let package = Package(

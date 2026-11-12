@@ -18,6 +18,7 @@ let deps: [(String, String)] = [
     ("TelegramTheme", "../TelegramTheme"),
     ("TelegramContext", "../TelegramContext"),
     ("TelegramUtils", "../TelegramUtils"),
+    ("TauSettings", "../TauSettings"),
     ("TelegramLinks", "../TelegramLinks"),
     ("TelegramMedia", "../TelegramMedia"),
     ("TelegramMediaUtils", "../TelegramMediaUtils"),

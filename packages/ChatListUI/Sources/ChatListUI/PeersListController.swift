@@ -26,6 +26,7 @@ import ChatModeTypes
 import InlineStickerLayer
 import HTMLBubbles
 import AppAnalytics
+import TauSettings
 
 public struct PeerListHiddenItems : Equatable {
     public var archive: ItemHideStatus
@@ -2683,7 +2684,7 @@ open class PeersListController<Context: AccountContextProtocol>: TelegramGeneric
         let storyList = self.storyList
         let storyState: Signal<EngineStorySubscriptions?, NoError>
         if let storyList = storyList {
-            storyState = storyList |> map(Optional.init)
+            storyState = combineLatest(storyList, TauSettings.shared.signal |> map { $0.hideStoriesInChatList } |> distinctUntilChanged) |> map { stories, hidden in hidden ? nil : stories } // Taugram
         } else {
             storyState = .single(nil)
         }

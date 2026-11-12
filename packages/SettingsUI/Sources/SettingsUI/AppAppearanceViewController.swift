@@ -557,7 +557,7 @@ private func appAppearanceEntries(appearance: Appearance, state: State, settings
     
     #if BETA || STABLE || DEBUG
     
-    if !dockIcons.icons.isEmpty {
+    if !dockIcons.icons.isEmpty, SettingsNavigationHooks.shared.taugram == nil { // Taugram
         struct DockTuple : Equatable {
             let icons: TelegramApplicationIcons
             let settings: DockSettings

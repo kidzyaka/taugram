@@ -1176,8 +1176,8 @@ enum ChannelInfoEntry<Context: AccountContextProtocol>: PeerInfoEntry {
                 arguments.openQrStudio(from: control)
             })
         case let .peerId(_, value, viewType):
-            return  TextAndLabelItem(initialSize, stableId: stableId.hashValue, label: "PEER ID", copyMenuText: strings().textCopyText, text: value, context: arguments.context, viewType: viewType, canCopy: true, _copyToClipboard: {
-                arguments.copy(value)
+            return  TextAndLabelItem(initialSize, stableId: stableId.hashValue, label: TauPeerIdValue(value).label, copyMenuText: strings().textCopyText, text: TauPeerIdValue(value).id, context: arguments.context, viewType: viewType, canCopy: true, _copyToClipboard: { // Taugram
+                arguments.copy(TauPeerIdValue(value).id) // Taugram
             })
         case let .report(_, viewType):
             return GeneralInteractedRowItem(initialSize, stableId: stableId.hashValue, name: strings().peerInfoReport, type: .none, viewType: viewType, action: { () in
@@ -1396,7 +1396,7 @@ func channelInfoEntries<Context: AccountContextProtocol>(view: PeerView, argumen
                 aboutBlock.append(.userName(sectionId: .desc, value: usernames, viewType: .singleItem))
             }
             if FastSettings.canViewPeerId {
-                aboutBlock.append(.peerId(sectionId: .desc, value: "\(channel.id.id._internalGetInt64Value())", viewType: .singleItem))
+                aboutBlock.append(.peerId(sectionId: .desc, value: TauPeerIdValue.encode(channel), viewType: .singleItem)) // Taugram
             }
             applyBlock(aboutBlock)
             

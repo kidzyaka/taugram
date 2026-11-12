@@ -53,6 +53,9 @@ public struct TauSettingsValues: Codable, Equatable {
     public var ghostByAccount: [Int64: TauGhostSettings] = [:]
     public var keepDeletedMessages: Bool = false
     public var keepEditHistory: Bool = false
+    public var showMessageSeconds: Bool = false
+    public var hideStoriesInChatList: Bool = false
+    public var appIcon: String?
 
     public init() {
     }
@@ -65,6 +68,9 @@ public struct TauSettingsValues: Codable, Equatable {
         self.ghostByAccount = try container.decodeIfPresent([Int64: TauGhostSettings].self, forKey: .ghostByAccount) ?? [:]
         self.keepDeletedMessages = try container.decodeIfPresent(Bool.self, forKey: .keepDeletedMessages) ?? false
         self.keepEditHistory = try container.decodeIfPresent(Bool.self, forKey: .keepEditHistory) ?? false
+        self.showMessageSeconds = try container.decodeIfPresent(Bool.self, forKey: .showMessageSeconds) ?? false
+        self.hideStoriesInChatList = try container.decodeIfPresent(Bool.self, forKey: .hideStoriesInChatList) ?? false
+        self.appIcon = try container.decodeIfPresent(String.self, forKey: .appIcon)
     }
 
     public var hasValidDangerousConsent: Bool {

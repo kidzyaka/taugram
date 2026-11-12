@@ -93,6 +93,9 @@ public final class DockControl {
             guard let self else {
                 return
             }
+            if SettingsNavigationHooks.isInstalled, SettingsNavigationHooks.shared.taugram != nil { // Taugram
+                return
+            }
             self.applyResource.set(nil)
 
             guard let selected = settings.iconSelected, selected != TelegramApplicationIcons.Icon.defaultIconName else {
