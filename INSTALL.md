@@ -18,7 +18,7 @@ package dependencies, so once the submodules are checked out the build is offlin
   ```
 - Homebrew and these packages:
   ```
-  brew install cmake ninja meson nasm yasm openssl@1.1 zlib autoconf libtool automake pkg-config
+  brew install cmake ninja meson nasm yasm zlib autoconf libtool automake pkg-config
   ```
 - A Rust toolchain via rustup. The TON wallet engine (`wallet-engine`) and the tlottie
   sticker renderer are Rust libraries; their build scripts pick up `cargo` from `PATH` or
@@ -60,8 +60,9 @@ sh scripts/setup_build_env.sh
 
 The script is idempotent and does everything from the requirements list that can be
 automated: installs Homebrew and the packages, installs Rosetta 2 on Apple Silicon,
-checks that full Xcode is selected, initialises the submodules recursively, and patches
-`ABSL_ATTRIBUTE_LIFETIME_BOUND` in `tg_owt`'s abseil copy, which recent clang rejects.
+checks that full Xcode is selected, initialises the submodules recursively, patches
+`ABSL_ATTRIBUTE_LIFETIME_BOUND` in `tg_owt`'s abseil copy, which recent clang rejects,
+and removes the Gatekeeper quarantine from the bundled `scripts/flatc`.
 It does not install Rust; do that yourself (see above).
 
 Run it with `--build` to continue straight into step 3.
@@ -307,6 +308,10 @@ cd packages/TGUIKit && swift build
 
 - **"Bad CPU type in executable" while building tde2e** on Apple Silicon: install
   Rosetta 2 (`softwareupdate --install-rosetta --agree-to-license`).
+- **`flatc` "cannot be opened because the developer cannot be verified"** or
+  `prepare-flat-serialization.py` fails with `Operation not permitted`: the checkout came
+  from a downloaded archive and `scripts/flatc` is quarantined. Run
+  `xattr -d com.apple.quarantine scripts/flatc` or rerun `sh scripts/setup_build_env.sh`.
 - **CMake complains about `cmake_minimum_required`**: export
   `CMAKE_POLICY_VERSION_MINIMUM=3.5` before running `configure_frameworks.sh`.
 - **clang error about `lifetimebound` in abseil** while building webrtc: run

@@ -59,7 +59,6 @@ BREW_PACKAGES=(
   meson        # dav1d
   nasm         # OpenH264 (x86_64 assembly)
   yasm         # ffmpeg / libvpx assembly
-  openssl@1.1  # used by several configure steps
   zlib
   autoconf
   libtool
@@ -137,6 +136,18 @@ if [ -f "$ABSL_ATTR" ]; then
   fi
 else
   warn "tg_owt abseil attributes.h not found yet (submodules not initialised?) — skipping patch"
+fi
+
+# ---------------------------------------------------------------------------
+# 7. Gatekeeper quarantine on the bundled flatc
+# ---------------------------------------------------------------------------
+FLATC="$REPO_DIR/scripts/flatc"
+if [ -f "$FLATC" ]; then
+  if xattr -p com.apple.quarantine "$FLATC" >/dev/null 2>&1; then
+    log "Removing the quarantine attribute from scripts/flatc"
+    xattr -d com.apple.quarantine "$FLATC"
+  fi
+  [ -x "$FLATC" ] || chmod +x "$FLATC"
 fi
 
 # ---------------------------------------------------------------------------
