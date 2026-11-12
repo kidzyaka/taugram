@@ -1,4 +1,5 @@
 import Cocoa
+import TauSettings // Taugram
 import TGUIKit
 import UniqueGiftBackground
 import AvatarEditorUI
@@ -1159,6 +1160,9 @@ private final class ExpandedAvatarShadeView: View {
 
 private final class NameContainer : View {
     let nameView = TextView()
+    private var tauNameLayer: TauNameGradientLayer? // Taugram
+    private var tauRole: TauContributorRole? // Taugram
+    private var tauShimmered = false // Taugram
     var statusControl: PremiumStatusControl?
     var leftStatusControl: PremiumStatusControl?
     required init(frame frameRect: NSRect) {
@@ -1169,6 +1173,7 @@ private final class NameContainer : View {
     
     func update<Context: AccountContextProtocol>(_ item: PeerInfoHeadItem<Context>, animated: Bool) {
         self.nameView.update(item.effectiveNameLayout)
+        self.tauRole = item.isAvatarExpanded || item.nameColor != nil || item.threadId != nil ? nil : TauContributors.role(item.peer?.id) // Taugram
         let context = item.context
         
         if let peer = item.peer {
@@ -1246,6 +1251,7 @@ private final class NameContainer : View {
             offset += control.frame.width + 2
         }
         nameView.centerY(x: offset)
+        self.layoutTauName() // Taugram
         var inset: CGFloat = nameView.frame.maxX + 5
         if let control = statusControl {
             control.centerY(x: inset, addition: -1)
@@ -3076,5 +3082,25 @@ private final class PeerInfoHeadView<Context: AccountContextProtocol> : GeneralC
     override func mouseDown(with event: NSEvent) {
         super.mouseDown(with: event)
         self.spawnGiftsView.mouseDown(with: event)
+    }
+}
+
+extension NameContainer {
+    fileprivate func layoutTauName() {
+        guard let role = self.tauRole, let layout = self.nameView.textLayout, let hostLayer = self.layer else {
+            self.tauNameLayer?.removeFromSuperlayer()
+            self.tauNameLayer = nil
+            return
+        }
+        let layer = self.tauNameLayer ?? TauNameGradientLayer()
+        self.tauNameLayer = layer
+        if layer.superlayer !== hostLayer || hostLayer.sublayers?.last !== layer {
+            hostLayer.addSublayer(layer)
+        }
+        layer.update(layout: layout, role: role, dark: theme.colors.isDark, origin: self.nameView.frame.origin, scale: backingScaleFactor)
+        if !self.tauShimmered, self.window != nil {
+            self.tauShimmered = true
+            layer.shimmer(layout: layout, scale: backingScaleFactor)
+        }
     }
 }

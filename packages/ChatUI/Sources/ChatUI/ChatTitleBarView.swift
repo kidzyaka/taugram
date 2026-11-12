@@ -1,4 +1,5 @@
 import Cocoa
+import TauSettings // Taugram
 import TGUIKit
 import Postbox
 import TelegramCore
@@ -68,6 +69,11 @@ class ChatTitleBarView: TitledBarView, InteractionContentViewProtocol {
     
     private var statusControl: PremiumStatusControl?
     private var leftStatusControl: PremiumStatusControl?
+    private var tauRole: TauContributorRole? // Taugram
+    private var tauIconView: ImageView? // Taugram
+    private var tauNameLayer: TauNameGradientLayer? // Taugram
+    private var tauShimmered = false // Taugram
+    private var tauTitle: NSAttributedString? // Taugram
 
     private var hasPhoto: Bool = false
     
@@ -501,8 +507,9 @@ class ChatTitleBarView: TitledBarView, InteractionContentViewProtocol {
         
         if let statusControl = leftStatusControl, let titleRect = titleRect {
             let lockWidth = titleImage.map { $0.0.backingSize.width }
-            statusControl.frame = ChatTitleLeadingIcons.verificationFrame(title: titleRect, lockWidth: lockWidth, badgeSize: statusControl.frame.size)
+            statusControl.frame = ChatTitleLeadingIcons.verificationFrame(title: self.tauIconView != nil ? titleRect.offsetBy(dx: -18, dy: 0) : titleRect, lockWidth: lockWidth, badgeSize: statusControl.frame.size) // Taugram
         }
+        self.layoutTauName() // Taugram
         
         reportPlaceholder?.frame = bounds
         
@@ -668,7 +675,14 @@ class ChatTitleBarView: TitledBarView, InteractionContentViewProtocol {
                 self.leftStatusControl = nil
             }
             
-            let leadingInsets = ChatTitleLeadingIcons.insets(base: baseTextInset, badgeWidth: leftStatusControl?.frame.width, hasLock: titleImage != nil)
+            if titleImage == nil, !chatInteraction.mode.isThreadMode, let peer = peerViewMainPeer(peerView), peer.id == peerView.peerId, peer.id != chatInteraction.interactionContext.peerId { // Taugram
+                self.tauRole = TauContributors.role(peer.id) // Taugram
+            } else { // Taugram
+                self.tauRole = nil // Taugram
+            } // Taugram
+            self.updateTauIcon() // Taugram
+            let tauBadgeWidth: CGFloat? = self.tauRole != nil ? (leftStatusControl.map { $0.frame.width + 18 } ?? 16) : leftStatusControl?.frame.width // Taugram
+            let leadingInsets = ChatTitleLeadingIcons.insets(base: baseTextInset, badgeWidth: tauBadgeWidth, hasLock: titleImage != nil) // Taugram
             self.textInset = leadingInsets.text
             self.titleInset = leadingInsets.title
 
@@ -801,8 +815,11 @@ class ChatTitleBarView: TitledBarView, InteractionContentViewProtocol {
                 break
             }
             
-            if text == nil || !text!.isEqual(to: result.title) || force {
-                text = result.title
+            let title = self.tauRole != nil ? tauClearTitle(result.title) : result.title // Taugram
+            if text == nil || !text!.isEqual(to: title) || force { // Taugram
+                text = title // Taugram
+                self.tauTitle = self.tauRole != nil ? result.title : nil // Taugram
+                self.needsLayout = true // Taugram
             }
             if let presence = result.presence {
                 self.presenceManager?.reset(presence: presence, timeDifference: Int32(chatInteraction.interactionContext.timeDifference))
@@ -841,5 +858,54 @@ private final class TitleAvatarControl: Control {
             return false
         }
         return true
+    }
+}
+
+private func tauClearTitle(_ title: NSAttributedString) -> NSAttributedString {
+    let clear = title.mutableCopy() as! NSMutableAttributedString
+    clear.addAttribute(.foregroundColor, value: NSColor.clear, range: NSMakeRange(0, clear.length))
+    return clear
+}
+
+extension ChatTitleBarView {
+    fileprivate func updateTauIcon() {
+        if let role = self.tauRole {
+            let view = self.tauIconView ?? ImageView()
+            view.image = tauRoleIcon(role)
+            view.setFrameSize(NSMakeSize(16, 16))
+            //TODOLANG
+            view.toolTip = role.title
+            if view.superview == nil {
+                self.addSubview(view)
+            }
+            self.tauIconView = view
+        } else {
+            self.tauIconView?.removeFromSuperview()
+            self.tauIconView = nil
+        }
+    }
+
+    fileprivate func layoutTauName() {
+        guard let role = self.tauRole, let title = self.tauTitle, let titleRect = self.titleRect, let hostLayer = self.layer else {
+            self.tauNameLayer?.removeFromSuperlayer()
+            self.tauNameLayer = nil
+            return
+        }
+        if let icon = self.tauIconView {
+            icon.setFrameOrigin(NSMakePoint(titleRect.minX - 18, floor(titleRect.midY - 8)))
+        }
+        let layout = TextViewLayout(title, maximumNumberOfLines: 1, truncationType: .end)
+        layout.measure(width: titleRect.width + 1)
+        let layer = self.tauNameLayer ?? TauNameGradientLayer()
+        self.tauNameLayer = layer
+        if layer.superlayer !== hostLayer || hostLayer.sublayers?.last !== layer {
+            hostLayer.addSublayer(layer)
+        }
+        let origin = NSMakePoint(titleRect.minX, floor(titleRect.midY - layout.layoutSize.height / 2))
+        layer.update(layout: layout, role: role, dark: theme.colors.isDark, origin: origin, scale: backingScaleFactor)
+        if !self.tauShimmered, self.window != nil {
+            self.tauShimmered = true
+            layer.shimmer(layout: layout, scale: backingScaleFactor)
+        }
     }
 }

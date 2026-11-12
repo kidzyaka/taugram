@@ -1,4 +1,5 @@
 import Cocoa
+import TauSettings // Taugram
 import AppAnalytics
 import TelegramCore
 import CurrencyFormat
@@ -1315,6 +1316,7 @@ enum UserInfoEntry<Context: AccountContextProtocol>: PeerInfoEntry {
     case phoneNumber(sectionId:Int, index: Int, value: PhoneNumberWithLabel, canCopy: Bool, viewType: GeneralViewType)
     case notes(sectionId:Int, index: Int, value: CachedUserData.Note, viewType: GeneralViewType)
     case peerId(sectionId:Int, value: String, viewType: GeneralViewType)
+    case tauRole(sectionId:Int, value: String, viewType: GeneralViewType) // Taugram
     case userName(sectionId:Int, value: [UserInfoAddress], viewType: GeneralViewType)
     case verifiedInfo(sectionId: Int, value: PeerVerification, viewType: GeneralViewType)
     case businessLocation(sectionId:Int, peer: EnginePeer, businessLocation: TelegramBusinessLocation, viewType: GeneralViewType)
@@ -1411,6 +1413,8 @@ enum UserInfoEntry<Context: AccountContextProtocol>: PeerInfoEntry {
             return viewType
         case .peerId(_, _, let viewType):
             return viewType
+        case .tauRole(_, _, let viewType): // Taugram
+            return viewType // Taugram
         case .userName(_, _, let viewType):
             return viewType
         case .verifiedInfo(_, _, let viewType):
@@ -1517,6 +1521,7 @@ enum UserInfoEntry<Context: AccountContextProtocol>: PeerInfoEntry {
         case let .userName(sectionId, value, _): return .userName(sectionId: sectionId, value: value, viewType: viewType)
         case let .verifiedInfo(sectionId, value, _): return .verifiedInfo(sectionId: sectionId, value: value, viewType: viewType)
         case let .peerId(sectionId, value, _): return .peerId(sectionId: sectionId, value: value, viewType: viewType)
+        case let .tauRole(sectionId, value, _): return .tauRole(sectionId: sectionId, value: value, viewType: viewType) // Taugram
         case let .businessLocation(sectionId, peer, location, _): return .businessLocation(sectionId: sectionId, peer: peer, businessLocation: location, viewType: viewType)
         case let .businessHours(sectionId, peer, businessHours, revealed, displayMyZone, _): return .businessHours(sectionId: sectionId, peer: peer, businessHours: businessHours, revealed: revealed, displayMyZone: displayMyZone, viewType: viewType)
         case let .reportReaction(sectionId, value, _): return .reportReaction(sectionId: sectionId, value: value, viewType: viewType)
@@ -1827,6 +1832,13 @@ enum UserInfoEntry<Context: AccountContextProtocol>: PeerInfoEntry {
             default:
                 return false
             }
+        case let .tauRole(sectionId, value, viewType): // Taugram
+            switch entry { // Taugram
+            case .tauRole(sectionId, value, viewType): // Taugram
+                return true // Taugram
+            default: // Taugram
+                return false // Taugram
+            } // Taugram
         case let .businessLocation(sectionId, peer, location, viewType):
             switch entry {
             case .businessLocation(sectionId, peer: peer, businessLocation: location, viewType):
@@ -2126,6 +2138,8 @@ enum UserInfoEntry<Context: AccountContextProtocol>: PeerInfoEntry {
             return 125
         case .peerId:
             return 126
+        case .tauRole: // Taugram
+            return 199 // Taugram
         case .notes:
             return 127
         case .businessHours:
@@ -2259,6 +2273,8 @@ enum UserInfoEntry<Context: AccountContextProtocol>: PeerInfoEntry {
             return (sectionId * 1000) + stableIndex
         case let .peerId(sectionId, _, _):
             return (sectionId * 1000) + stableIndex
+        case let .tauRole(sectionId, _, _): // Taugram
+            return (sectionId * 1000) + stableIndex // Taugram
         case let .businessHours(sectionId, _, _, _, _, _):
             return (sectionId * 1000) + stableIndex
         case let .businessLocation(sectionId, _, _, _):
@@ -2558,6 +2574,8 @@ enum UserInfoEntry<Context: AccountContextProtocol>: PeerInfoEntry {
             }, linkInteractions: interactions, qrCode: { control in
                 arguments.openQrStudio(from: control)
             })
+        case let .tauRole(_, value, viewType): // Taugram
+            return TextAndLabelItem(initialSize, stableId: stableId.hashValue, label: "TAUGRAM", copyMenuText: strings().textCopyText, text: value, context: arguments.context, viewType: viewType, canCopy: false) // Taugram
         case let .peerId(_, value, viewType):
             return  TextAndLabelItem(initialSize, stableId: stableId.hashValue, label: TauPeerIdValue(value).label, copyMenuText: strings().textCopyText, text: TauPeerIdValue(value).id, context: arguments.context, viewType: viewType, canCopy: true, _copyToClipboard: { // Taugram
                 arguments.copy(TauPeerIdValue(value).id) // Taugram
@@ -3103,6 +3121,11 @@ func userInfoEntries<Context: AccountContextProtocol>(view: PeerView, arguments:
                 
             }
             
+            if let role = TauContributors.role(user.id), state.editingState == nil { // Taugram
+                entries.append(UserInfoEntry<Context>.section(sectionId: sectionId)) // Taugram
+                sectionId += 1 // Taugram
+                entries.append(UserInfoEntry<Context>.tauRole(sectionId: sectionId, value: role.title, viewType: .singleItem)) // Taugram
+            } // Taugram
             if FastSettings.canViewPeerId, state.editingState == nil {
                 entries.append(UserInfoEntry<Context>.section(sectionId: sectionId))
                 sectionId += 1

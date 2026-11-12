@@ -1,4 +1,5 @@
 import Cocoa
+import TauSettings // Taugram
 import TGUIKit
 import SwiftSignalKit
 import TelegramCore
@@ -1180,6 +1181,7 @@ public class ChatListRowView: TableRowView {
     private var chatNameText: ChatListInlineText? = nil
     private var dateTextView: ChatListTextLayer? = nil
     private var displayNameView: ChatListTextLayer? = nil
+    private var tauNameLayer: TauNameGradientLayer? = nil // Taugram
     private var monoforumMessagesView: InteractiveTextView? = nil
     private var messageText: ChatListInlineText? = nil
 
@@ -1838,6 +1840,16 @@ public class ChatListRowView: TableRowView {
                  ChatListTextLayer.remove(view, animated: animated)
                  self.displayNameView = nil
              }
+             if item.ctxDisplayLayout != nil, !item.isActiveSelected, !item.isTopic, item.peerId != item.context.peerId, TauContributors.role(item.peerId) != nil { // Taugram
+                 if self.tauNameLayer == nil { // Taugram
+                     let layer = TauNameGradientLayer() // Taugram
+                     self.tauNameLayer = layer // Taugram
+                     contentView.layer?.addSublayer(layer) // Taugram
+                 } // Taugram
+             } else if let layer = self.tauNameLayer { // Taugram
+                 layer.removeFromSuperlayer() // Taugram
+                 self.tauNameLayer = nil // Taugram
+             } // Taugram
              
              if let displayLayout = item.ctxMonoforumMessages {
                  let current: InteractiveTextView
@@ -3087,6 +3099,9 @@ public class ChatListRowView: TableRowView {
                // addition += 20
             }
             displayNameView.position = NSMakePoint(item.leftInset + addition, item.margin - 1)
+            if let tauNameLayer = self.tauNameLayer, let layout = item.ctxDisplayLayout, let role = TauContributors.role(item.peerId) { // Taugram
+                tauNameLayer.update(layout: layout, role: role, dark: theme.colors.isDark, origin: displayNameView.frame.origin, scale: backingScaleFactor) // Taugram
+            } // Taugram
             
             var offset: CGFloat = 0
             if let chatName = item.ctxChatNameLayout {

@@ -1,4 +1,5 @@
 import Cocoa
+import TauSettings // Taugram
 import TGUIKit
 import TelegramCore
 import TGModernGrowingTextView
@@ -372,6 +373,7 @@ public class ChatRowView: TableRowView, Notifable, MultipleSelectable, ChatTextS
     
     private var forwardAccessory: ChatBubbleAccessoryForward? = nil
     private var viaAccessory: ChatBubbleViaAccessory? = nil
+    private var tauNameLayer: TauNameGradientLayer? = nil // Taugram
     
     
     public let bubbleView = ChatMessageBubbleBackdrop()
@@ -2037,6 +2039,9 @@ public class ChatRowView: TableRowView, Notifable, MultipleSelectable, ChatTextS
     
     
     public func fillName(_ item:ChatRowItem, animated: Bool) -> Void {
+        defer { // Taugram
+            self.fillTauName(item) // Taugram
+        } // Taugram
         if let author = item.authorText {
             if item.isBubbled && !item.hasBubble {
                 (rowView as? ChatLayerRowView)?.updateSenderName(nil, toolTip: nil, frame: .zero, animated: animated)
@@ -2974,3 +2979,19 @@ public class ChatRowView: TableRowView, Notifable, MultipleSelectable, ChatTextS
 }
 
 extension PremiumStatusLayer: ChatLayerHostedVisibility {}
+
+extension ChatRowView {
+    fileprivate func fillTauName(_ item: ChatRowItem) {
+        guard let author = item.authorText, !(item.isBubbled && !item.hasBubble), let role = TauContributors.role(item.peer?.id), let hostLayer = rowView.layer else {
+            self.tauNameLayer?.removeFromSuperlayer()
+            self.tauNameLayer = nil
+            return
+        }
+        let layer = self.tauNameLayer ?? TauNameGradientLayer()
+        self.tauNameLayer = layer
+        if layer.superlayer !== hostLayer || hostLayer.sublayers?.last !== layer {
+            hostLayer.addSublayer(layer)
+        }
+        layer.update(layout: author, role: role, dark: theme.colors.isDark, origin: namePoint(item), scale: backingScaleFactor)
+    }
+}
