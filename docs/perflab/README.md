@@ -23,7 +23,7 @@ Rendering happens in WindowServer, not in the app, so a placeholder or animation
 tools/perflab/run.sh emoji-panel baseline -PerfLabScenarios shimmer,shimmeridle,warm,idle,cold -PerfLabRuns 3
 ```
 
-Reports go to `~/Library/Group Containers/6N38VWS5BX.ru.keepcoder.Telegram/debug/perf-lab/` and are copied with the system samples and the summary to `tools/perflab/results/` (ignored by git).
+Reports go to `~/Library/Group Containers/AF4N4AKWPQ.com.kidzyaka.taugram/debug/perf-lab/` and are copied with the system samples and the summary to `tools/perflab/results/` (ignored by git).
 
 ## Launch arguments
 

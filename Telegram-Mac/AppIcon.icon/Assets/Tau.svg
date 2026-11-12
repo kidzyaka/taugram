@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024px" height="1024px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <title>Tau</title>
+    <g id="Tau" fill="none" stroke="#FFFFFF" stroke-width="84" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M318,420 C318,368 352,340 404,340 L712,340"></path>
+        <path d="M530,340 L530,612 C530,664 556,690 604,690 C632,690 652,682 668,668"></path>
+    </g>
+</svg>

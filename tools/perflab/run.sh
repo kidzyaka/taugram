@@ -7,7 +7,7 @@ if [ -z "$LAB" ] || [ -z "$LABEL" ]; then
     exit 1
 fi
 APP=${PERFLAB_APP:-$(ls -d ~/Library/Developer/Xcode/DerivedData/Telegram-Mac-*/Build/Products/Debug/Telegram.app 2>/dev/null | head -1)}
-OUT="$HOME/Library/Group Containers/6N38VWS5BX.ru.keepcoder.Telegram/debug/perf-lab"
+OUT="$HOME/Library/Group Containers/AF4N4AKWPQ.com.kidzyaka.taugram/debug/perf-lab"
 RESULTS=${PERFLAB_RESULTS:-$DIR/results}
 mkdir -p "$RESULTS"
 if pgrep -f '^[^ ]*Debug/Telegram[.]app/Contents/MacOS/Telegram' >/dev/null; then

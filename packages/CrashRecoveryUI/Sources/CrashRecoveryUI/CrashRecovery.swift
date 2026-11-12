@@ -57,7 +57,7 @@ private func systemPalette() -> ColorPalette {
 }
 
 private let appStoreURL = URL(string: "macappstore://apps.apple.com/app/id747648890")!
-private let websiteURL = URL(string: "https://macos.telegram.org")!
+private let websiteURL = URL(string: "https://github.com/kidzyaka/taugram/releases")! // Taugram
 
 private enum Text {
     static let title = strings().crashRecoveryTitle

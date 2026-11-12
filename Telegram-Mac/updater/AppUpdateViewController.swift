@@ -660,6 +660,8 @@ enum UpdaterSource : Equatable {
 }
 
 
+let appUpdatesEnabled = (Bundle.main.infoDictionary?["SUFeedURL"] as? String).flatMap(URL.init(string:))?.host != nil // Taugram
+
 private var updateFeedURL: URL {
     return URL(string: Bundle.main.infoDictionary!["SUFeedURL"] as! String)!
 }
@@ -787,6 +789,7 @@ private func resetUpdater() {
 private var updaterSource: UpdaterSource? = nil
 
 func updater_resetWithUpdaterSource(_ source: UpdaterSource, force: Bool = true) {
+    guard appUpdatesEnabled else { return } // Taugram
     let state = stateValue.with { $0 }
     switch state.loadingState {
     case .readyToInstall:

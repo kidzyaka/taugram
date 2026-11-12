@@ -15,7 +15,7 @@ if [ -z "$NETWORKLAB_APP" ]; then
     done
 fi
 APP=$NETWORKLAB_APP
-OUT="$HOME/Library/Group Containers/6N38VWS5BX.ru.keepcoder.Telegram/debug/perf-lab"
+OUT="$HOME/Library/Group Containers/AF4N4AKWPQ.com.kidzyaka.taugram/debug/perf-lab"
 RESULTS=${NETWORKLAB_RESULTS:-$DIR/results}
 BENCH="$ROOT/submodules/telegram-ios/third-party/mtproto-engine/target/release/mtproto-bench"
 mkdir -p "$RESULTS" "$OUT"

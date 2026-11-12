@@ -1346,6 +1346,7 @@ class AppDelegate: NSResponder, NSApplicationDelegate, NSUserNotificationCenterD
 
     @IBAction func checkForUpdates(_ sender: Any) {
         #if !APP_STORE
+            guard appUpdatesEnabled else { return } // Taugram
             showModal(with: InputDataModalController(AppUpdateViewController()), for: window)
             #if STABLE
                 if let context = self.contextValue?.context {
@@ -1362,6 +1363,10 @@ class AppDelegate: NSResponder, NSApplicationDelegate, NSUserNotificationCenterD
     override func awakeFromNib() {
         #if APP_STORE
         if let menu = NSApp.mainMenu?.item(at: 0)?.submenu, let sparkleItem = menu.item(withTag: 1000) {
+            menu.removeItem(sparkleItem)
+        }
+        #else
+        if !appUpdatesEnabled, let menu = NSApp.mainMenu?.item(at: 0)?.submenu, let sparkleItem = menu.item(withTag: 1000) { // Taugram
             menu.removeItem(sparkleItem)
         }
         #endif
@@ -1435,7 +1440,7 @@ class AppDelegate: NSResponder, NSApplicationDelegate, NSUserNotificationCenterD
         #elseif GITHUB || DEBUG
         return .website
         #else
-        return .updater(crashRecoveryUpdater())
+        return appUpdatesEnabled ? .updater(crashRecoveryUpdater()) : .website // Taugram
         #endif
     }
     

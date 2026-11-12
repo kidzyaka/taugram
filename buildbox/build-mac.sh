@@ -77,11 +77,11 @@ sed -n '/^Build Timing Summary/,$p' "$XCODEBUILD_LOG" | tail -60
 cd ..
 
 archive="./telegrammacos.xcarchive"
-appname="Telegram.app"
+appname="Taugram.app"
 
 rm -rf ${appname} ${appname}.dSYM ${appname}.DSYM.zip
-cp -R "${archive}/Products/Applications/Telegram.app" ${appname}
-cp -R "${archive}/dSYMs/Telegram.app.dSYM" ${appname}.dSYM
+cp -R "${archive}/Products/Applications/Taugram.app" ${appname}
+cp -R "${archive}/dSYMs/Taugram.app.dSYM" ${appname}.dSYM
 
 
 sh "$PWDPATH/scripts/time-step.sh" dsym-compression \

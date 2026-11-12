@@ -374,7 +374,7 @@ func installSettingsUIHooks() {
         #if APP_STORE
             appUpdateState = .single(nil)
         #else
-        appUpdateState = appUpdateStateSignal |> map(Optional.init)
+        appUpdateState = appUpdatesEnabled ? appUpdateStateSignal |> map(Optional.init) : .single(nil) // Taugram
         #endif
         return appUpdateState
     }, pushAppUpdate: { navigation in

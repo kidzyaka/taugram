@@ -186,7 +186,6 @@
 		274B9E40273008EB009993C7 /* sent.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 274B9E3F273008EB009993C7 /* sent.mp3 */; };
 		274BB56D264013AD00620D03 /* cameraon.tgs in Resources */ = {isa = PBXBuildFile; fileRef = 274BB56C264013AC00620D03 /* cameraon.tgs */; };
 		274BB570264013B900620D03 /* cameraoff.tgs in Resources */ = {isa = PBXBuildFile; fileRef = 274BB56F264013B800620D03 /* cameraoff.tgs */; };
-		274DF1DB2DC0BE0400188E7A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 274DF1DA2DC0BE0400188E7A /* GoogleService-Info.plist */; };
 		2750B8C22B887E9C0035C37F /* business_chatbot.tgs in Resources */ = {isa = PBXBuildFile; fileRef = 2750B8BD2B887E980035C37F /* business_chatbot.tgs */; };
 		2750B8C32B887E9C0035C37F /* business_hours.tgs in Resources */ = {isa = PBXBuildFile; fileRef = 2750B8BE2B887E990035C37F /* business_hours.tgs */; };
 		2750B8C42B887E9C0035C37F /* business_greeting_message.tgs in Resources */ = {isa = PBXBuildFile; fileRef = 2750B8BF2B887E9A0035C37F /* business_greeting_message.tgs */; };
@@ -1223,7 +1222,6 @@
 		274B9E3F273008EB009993C7 /* sent.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = sent.mp3; sourceTree = "<group>"; };
 		274BB56C264013AC00620D03 /* cameraon.tgs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = cameraon.tgs; sourceTree = "<group>"; };
 		274BB56F264013B800620D03 /* cameraoff.tgs */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = cameraoff.tgs; sourceTree = "<group>"; };
-		274DF1DA2DC0BE0400188E7A /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		2750B8BD2B887E980035C37F /* business_chatbot.tgs */ = {isa = PBXFileReference; lastKnownFileType = file; path = business_chatbot.tgs; sourceTree = "<group>"; };
 		2750B8BE2B887E990035C37F /* business_hours.tgs */ = {isa = PBXFileReference; lastKnownFileType = file; path = business_hours.tgs; sourceTree = "<group>"; };
 		2750B8BF2B887E9A0035C37F /* business_greeting_message.tgs */ = {isa = PBXFileReference; lastKnownFileType = file; path = business_greeting_message.tgs; sourceTree = "<group>"; };
@@ -1905,7 +1903,7 @@
 		D0830FC324127468006198E7 /* new_folder.tgs */ = {isa = PBXFileReference; lastKnownFileType = file; path = new_folder.tgs; sourceTree = "<group>"; };
 		D0983E162568373E00467703 /* AppCenterAnalytics.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AppCenterAnalytics.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0983E182568373E00467703 /* AppCenterCrashes.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = AppCenterCrashes.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		D098C7151D7E175A007784E4 /* Telegram.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Telegram.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D098C7151D7E175A007784E4 /* Taugram.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Taugram.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D098C7181D7E175A007784E4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		D098C71A1D7E175A007784E4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D098C71F1D7E175A007784E4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -3179,7 +3177,6 @@
 		9307BA574F76E961D54A1049 /* config */ = {
 			isa = PBXGroup;
 			children = (
-				274DF1DA2DC0BE0400188E7A /* GoogleService-Info.plist */,
 			);
 			path = config;
 			sourceTree = "<group>";
@@ -3390,7 +3387,7 @@
 			isa = PBXGroup;
 			children = (
 				A4413997759AB0FBF49F01F4 /* WidgetEngineService.xpc */,
-				D098C7151D7E175A007784E4 /* Telegram.app */,
+				D098C7151D7E175A007784E4 /* Taugram.app */,
 				C232EA911E1D07E700C4D38C /* TelegramShare.appex */,
 			);
 			name = Products;
@@ -3917,7 +3914,7 @@
 				279737C42FA0E651006E25B4 /* SwiftMath */,
 			);
 			productName = "Telegram-Mac";
-			productReference = D098C7151D7E175A007784E4 /* Telegram.app */;
+			productReference = D098C7151D7E175A007784E4 /* Taugram.app */;
 			productType = "com.apple.product-type.application";
 		};
 		685F0F9AA720136F75F49A14 /* WidgetEngineService */ = {
@@ -4254,7 +4251,6 @@
 				274B9E40273008EB009993C7 /* sent.mp3 in Resources */,
 				27803BF927A3E944007B0FA9 /* menu_folder_read.tgs in Resources */,
 				270FECAF2E33DAC7006F6468 /* star_currency_mono.tgs in Resources */,
-				274DF1DB2DC0BE0400188E7A /* GoogleService-Info.plist in Resources */,
 				9F03680F22771A9700456348 /* anim_unarchive.json in Resources */,
 				27CE155B297966D8001F8CE8 /* emoji_category_away.tgs in Resources */,
 				27CCE83A2B839C1200F7C687 /* lighterTexture.jpg in Resources */,
@@ -4939,7 +4935,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 278481;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 6N38VWS5BX;
+				DEVELOPMENT_TEAM = AF4N4AKWPQ;
 				ENABLE_BITCODE = NO;
 				ENABLE_DEBUG_DYLIB = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
@@ -4982,8 +4978,9 @@
 				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = ru.keepcoder.Telegram;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.kidzyaka.taugram;
+				PRODUCT_MODULE_NAME = Telegram;
+				PRODUCT_NAME = Taugram;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = PRODUCTION;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -5006,7 +5003,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 278481;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 6N38VWS5BX;
+				DEVELOPMENT_TEAM = AF4N4AKWPQ;
 				ENABLE_DEBUG_DYLIB = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
 				FRAMEWORK_SEARCH_PATHS = "";
@@ -5035,7 +5032,7 @@
 				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = "";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = ru.keepcoder.Telegram.TelegramShare;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kidzyaka.taugram.TelegramShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = NO;
@@ -5058,7 +5055,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 278481;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 6N38VWS5BX;
+				DEVELOPMENT_TEAM = AF4N4AKWPQ;
 				ENABLE_DEBUG_DYLIB = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
 				FRAMEWORK_SEARCH_PATHS = "";
@@ -5088,7 +5085,7 @@
 				OTHER_LDFLAGS = "";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
 				"OTHER_SWIFT_FLAGS[arch=*]" = "";
-				PRODUCT_BUNDLE_IDENTIFIER = ru.keepcoder.Telegram.TelegramShare;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kidzyaka.taugram.TelegramShare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = NO;
@@ -5165,7 +5162,7 @@
 				CURRENT_PROJECT_VERSION = 278481;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 6N38VWS5BX;
+				DEVELOPMENT_TEAM = AF4N4AKWPQ;
 				ENABLE_BITCODE = NO;
 				ENABLE_DEBUG_DYLIB = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
@@ -5208,8 +5205,9 @@
 				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = "-ObjC";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = ru.keepcoder.Telegram;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.kidzyaka.taugram;
+				PRODUCT_MODULE_NAME = Telegram;
+				PRODUCT_NAME = Taugram;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_COMPILATION_MODE = singlefile;
@@ -5230,7 +5228,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 6N38VWS5BX;
+				DEVELOPMENT_TEAM = AF4N4AKWPQ;
 				ENABLE_DEBUG_DYLIB = NO;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -5242,7 +5240,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = ru.keepcoder.Telegram.WidgetEngine;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kidzyaka.taugram.WidgetEngine;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
@@ -5261,7 +5259,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 6N38VWS5BX;
+				DEVELOPMENT_TEAM = AF4N4AKWPQ;
 				ENABLE_DEBUG_DYLIB = NO;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GCC_OPTIMIZATION_LEVEL = s;
@@ -5273,7 +5271,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				ONLY_ACTIVE_ARCH = NO;
-				PRODUCT_BUNDLE_IDENTIFIER = ru.keepcoder.Telegram.WidgetEngine;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kidzyaka.taugram.WidgetEngine;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
