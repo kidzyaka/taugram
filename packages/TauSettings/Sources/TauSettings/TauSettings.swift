@@ -53,6 +53,9 @@ public struct TauSettingsValues: Codable, Equatable {
     public var ghostByAccount: [Int64: TauGhostSettings] = [:]
     public var keepDeletedMessages: Bool = false
     public var keepEditHistory: Bool = false
+    public var bypassContentProtection: Bool = false
+    public var viewOnceWithoutMarking: Bool = false
+    public var viewOnceInSecretChats: Bool = false
     public var showMessageSeconds: Bool = false
     public var hideStoriesInChatList: Bool = false
     public var appIcon: String?
@@ -70,6 +73,9 @@ public struct TauSettingsValues: Codable, Equatable {
         self.ghostByAccount = try container.decodeIfPresent([Int64: TauGhostSettings].self, forKey: .ghostByAccount) ?? [:]
         self.keepDeletedMessages = try container.decodeIfPresent(Bool.self, forKey: .keepDeletedMessages) ?? false
         self.keepEditHistory = try container.decodeIfPresent(Bool.self, forKey: .keepEditHistory) ?? false
+        self.bypassContentProtection = try container.decodeIfPresent(Bool.self, forKey: .bypassContentProtection) ?? false
+        self.viewOnceWithoutMarking = try container.decodeIfPresent(Bool.self, forKey: .viewOnceWithoutMarking) ?? false
+        self.viewOnceInSecretChats = try container.decodeIfPresent(Bool.self, forKey: .viewOnceInSecretChats) ?? false
         self.showMessageSeconds = try container.decodeIfPresent(Bool.self, forKey: .showMessageSeconds) ?? false
         self.hideStoriesInChatList = try container.decodeIfPresent(Bool.self, forKey: .hideStoriesInChatList) ?? false
         self.appIcon = try container.decodeIfPresent(String.self, forKey: .appIcon)
@@ -100,7 +106,7 @@ public struct TauSettingsValues: Codable, Equatable {
         for (id, ghost) in self.ghostByAccount {
             ghostByAccount[PeerId(id)] = ghost.coreFlags
         }
-        return TauCoreFlags(dangerousFeaturesAllowed: self.dangerousFeaturesAllowed, ghost: self.ghost.coreFlags, ghostByAccount: ghostByAccount, keepDeletedMessages: self.keepDeletedMessages, keepEditHistory: self.keepEditHistory)
+        return TauCoreFlags(dangerousFeaturesAllowed: self.dangerousFeaturesAllowed, ghost: self.ghost.coreFlags, ghostByAccount: ghostByAccount, keepDeletedMessages: self.keepDeletedMessages, keepEditHistory: self.keepEditHistory, bypassContentProtection: self.bypassContentProtection, viewOnceWithoutMarking: self.viewOnceWithoutMarking, viewOnceInSecretChats: self.viewOnceInSecretChats)
     }
 }
 

@@ -280,10 +280,10 @@ index 91c5c772f3abbc45895387981e3f960ac2628938..555ee97852875c1b75d8294d8a4576ce
                  if let attribute = attribute as? AudioTranscriptionMessageAttribute {
 diff --git a/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift b/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift
 new file mode 100644
-index 0000000000000000000000000000000000000000..8bc87a748b54d3fd8a30a00c9c442677a8bc901c
+index 0000000000000000000000000000000000000000..75fda4274da0a94feafbdef7aad84efb8bc86c4c
 --- /dev/null
 +++ b/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,110 @@
 +import Foundation
 +import Postbox
 +
@@ -317,13 +317,19 @@ index 0000000000000000000000000000000000000000..8bc87a748b54d3fd8a30a00c9c442677
 +    public var ghostByAccount: [PeerId: TauGhostFlags]
 +    public var keepDeletedMessages: Bool
 +    public var keepEditHistory: Bool
++    public var bypassContentProtection: Bool
++    public var viewOnceWithoutMarking: Bool
++    public var viewOnceInSecretChats: Bool
 +
-+    public init(dangerousFeaturesAllowed: Bool = false, ghost: TauGhostFlags = .off, ghostByAccount: [PeerId: TauGhostFlags] = [:], keepDeletedMessages: Bool = false, keepEditHistory: Bool = false) {
++    public init(dangerousFeaturesAllowed: Bool = false, ghost: TauGhostFlags = .off, ghostByAccount: [PeerId: TauGhostFlags] = [:], keepDeletedMessages: Bool = false, keepEditHistory: Bool = false, bypassContentProtection: Bool = false, viewOnceWithoutMarking: Bool = false, viewOnceInSecretChats: Bool = false) {
 +        self.dangerousFeaturesAllowed = dangerousFeaturesAllowed
 +        self.ghost = ghost
 +        self.ghostByAccount = ghostByAccount
 +        self.keepDeletedMessages = keepDeletedMessages
 +        self.keepEditHistory = keepEditHistory
++        self.bypassContentProtection = bypassContentProtection
++        self.viewOnceWithoutMarking = viewOnceWithoutMarking
++        self.viewOnceInSecretChats = viewOnceInSecretChats
 +    }
 +}
 +
@@ -374,6 +380,19 @@ index 0000000000000000000000000000000000000000..8bc87a748b54d3fd8a30a00c9c442677
 +        let flags = self.current
 +        return flags.dangerousFeaturesAllowed && flags.keepEditHistory
 +    }
++
++    public var bypassesContentProtection: Bool {
++        let flags = self.current
++        return flags.dangerousFeaturesAllowed && flags.bypassContentProtection
++    }
++
++    public func viewsOnceWithoutMarking(secretChat: Bool) -> Bool {
++        let flags = self.current
++        guard flags.dangerousFeaturesAllowed, flags.viewOnceWithoutMarking else {
++            return false
++        }
++        return !secretChat || flags.viewOnceInSecretChats
++    }
 +}
 diff --git a/submodules/TelegramCore/Sources/Tau/TauGhostNetwork.swift b/submodules/TelegramCore/Sources/Tau/TauGhostNetwork.swift
 new file mode 100644
@@ -406,10 +425,10 @@ index 0000000000000000000000000000000000000000..a4186c9cc06cc05b88903f555b28530a
 +}
 diff --git a/submodules/TelegramCore/Sources/Tau/TauMessageHistory.swift b/submodules/TelegramCore/Sources/Tau/TauMessageHistory.swift
 new file mode 100644
-index 0000000000000000000000000000000000000000..8b06ca77bd3f6ca5a954ef4e1ab64aecbcb6a9f6
+index 0000000000000000000000000000000000000000..2864b8b23e7bdb65db51a8c04b173f9206399a4b
 --- /dev/null
 +++ b/submodules/TelegramCore/Sources/Tau/TauMessageHistory.swift
-@@ -0,0 +1,223 @@
+@@ -0,0 +1,239 @@
 +import Foundation
 +import Postbox
 +
@@ -633,6 +652,22 @@ index 0000000000000000000000000000000000000000..8b06ca77bd3f6ca5a954ef4e1ab64aec
 +    }
 +    return TauEditHistoryMessageAttribute(versions: versions)
 +}
++
++func tauKeepsSelfDestructingContent(_ message: Message) -> Bool {
++    let secretChat = message.id.peerId.namespace == Namespaces.Peer.SecretChat
++    guard TauCoreSettings.shared.viewsOnceWithoutMarking(secretChat: secretChat) else {
++        return false
++    }
++    for attribute in message.attributes {
++        if attribute is AutoclearTimeoutMessageAttribute {
++            return true
++        }
++        if secretChat && attribute is AutoremoveTimeoutMessageAttribute {
++            return true
++        }
++    }
++    return false
++}
 diff --git a/submodules/TelegramCore/Sources/TelegramEngine/Messages/ApplyMaxReadIndexInteractively.swift b/submodules/TelegramCore/Sources/TelegramEngine/Messages/ApplyMaxReadIndexInteractively.swift
 index 0e26cab4c2631a986deb1f9bbdbd6b056a7087b4..d0e992b60d60e4e25e1ac5946b9dc12d1bcca362 100644
 --- a/submodules/TelegramCore/Sources/TelegramEngine/Messages/ApplyMaxReadIndexInteractively.swift
@@ -701,6 +736,20 @@ index 819a71ca0c0543c9866ac39ec762b875692a7d3e..067c70c06acabd1308a2450dc6676630
                                  |> map(Optional.init)
                                  |> `catch` { _ -> Signal<Api.messages.AffectedMessages?, NoError> in
                                      return .single(nil)
+diff --git a/submodules/TelegramCore/Sources/TelegramEngine/Messages/MarkMessageContentAsConsumedInteractively.swift b/submodules/TelegramCore/Sources/TelegramEngine/Messages/MarkMessageContentAsConsumedInteractively.swift
+index 79f901067eec4df0881d7bf03d06e8b86893b716..d21754042e8e4751de53a896c16441988fe4aa8c 100644
+--- a/submodules/TelegramCore/Sources/TelegramEngine/Messages/MarkMessageContentAsConsumedInteractively.swift
++++ b/submodules/TelegramCore/Sources/TelegramEngine/Messages/MarkMessageContentAsConsumedInteractively.swift
+@@ -6,6 +6,9 @@ import SwiftSignalKit
+ func _internal_markMessageContentAsConsumedInteractively(postbox: Postbox, messageId: MessageId) -> Signal<Void, NoError> {
+     return postbox.transaction { transaction -> Void in
+         if let message = transaction.getMessage(messageId), message.flags.contains(.Incoming) {
++            if tauKeepsSelfDestructingContent(message) { // Taugram
++                return
++            }
+             var updateMessage = false
+             var updatedAttributes = message.attributes
+             
 diff --git a/submodules/TelegramCore/Sources/TelegramEngine/Messages/ReplyThreadHistory.swift b/submodules/TelegramCore/Sources/TelegramEngine/Messages/ReplyThreadHistory.swift
 index 04945389638f5bf66324fd44010a8b69d8ab0d5e..d32e2e03d632edf79931dfd8aa0c07ada30f31e7 100644
 --- a/submodules/TelegramCore/Sources/TelegramEngine/Messages/ReplyThreadHistory.swift
@@ -749,3 +798,19 @@ index 9e71173b22c63316d76fd0929b9a7c57a5f96bd0..9b55e41fa9be7d7ccc4b1d73f055c8f6
                                                  var resourceIds: [MediaResourceId] = []
                                                  transaction.deleteMessagesInRange(peerId: peerId, namespace: minAvailableMessageId.namespace, minId: 1, maxId: minAvailableMessageId.id, forEachMedia: { media in
                                                      addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)
+diff --git a/submodules/TelegramCore/Sources/Utils/MessageUtils.swift b/submodules/TelegramCore/Sources/Utils/MessageUtils.swift
+index 5e2bce1ee37e04d636198bb482bee08ed1f9fd40..4d7f28bc97603d8cf03ddcefbc9a3707c792a531 100644
+--- a/submodules/TelegramCore/Sources/Utils/MessageUtils.swift
++++ b/submodules/TelegramCore/Sources/Utils/MessageUtils.swift
+@@ -535,7 +535,10 @@ public extension Message {
+         }
+     }
+     
+-    func isCopyProtected() -> Bool {
++    func isCopyProtected(ignoringTaugram: Bool = false) -> Bool { // Taugram
++        if !ignoringTaugram && TauCoreSettings.shared.bypassesContentProtection { // Taugram
++            return false
++        }
+         if self.flags.contains(.CopyProtected) {
+             return true
+         } else if let group = self.peers[self.id.peerId] as? TelegramGroup, group.flags.contains(.copyProtectionEnabled) {

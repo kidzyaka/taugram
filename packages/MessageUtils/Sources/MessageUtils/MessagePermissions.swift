@@ -110,12 +110,12 @@ public func canForwardMessage(_ sourceMessage: Message, chatInteraction: any Mes
     }
     
     if let peer = message.peers[message.id.peerId] as? TelegramGroup {
-        if peer.flags.contains(.copyProtectionEnabled) {
+        if peer.flags.contains(.copyProtectionEnabled) && !TauCoreSettings.shared.bypassesContentProtection { // Taugram
             return false
         }
     }
     if let peer = message.peers[message.id.peerId] as? TelegramChannel {
-        if peer.flags.contains(.copyProtectionEnabled) {
+        if peer.flags.contains(.copyProtectionEnabled) && !TauCoreSettings.shared.bypassesContentProtection { // Taugram
             return false
         }
     }

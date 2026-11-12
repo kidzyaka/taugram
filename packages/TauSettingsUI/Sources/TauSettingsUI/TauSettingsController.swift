@@ -19,8 +19,8 @@ private final class Arguments {
     let togglePeerId: () -> Void
     let toggleOLED: () -> Void
     let toggleGhost: (WritableKeyPath<TauGhostSettings, Bool>?) -> Void
-    let toggleHistory: (WritableKeyPath<TauSettingsValues, Bool>) -> Void
-    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void, toggleHistory: @escaping (WritableKeyPath<TauSettingsValues, Bool>) -> Void) {
+    let toggleValue: (WritableKeyPath<TauSettingsValues, Bool>) -> Void
+    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void, toggleValue: @escaping (WritableKeyPath<TauSettingsValues, Bool>) -> Void) {
         self.toggleDangerousFeatures = toggleDangerousFeatures
         self.reviewConsent = reviewConsent
         self.selectAppIcon = selectAppIcon
@@ -29,7 +29,7 @@ private final class Arguments {
         self.togglePeerId = togglePeerId
         self.toggleOLED = toggleOLED
         self.toggleGhost = toggleGhost
-        self.toggleHistory = toggleHistory
+        self.toggleValue = toggleValue
     }
 }
 
@@ -57,6 +57,9 @@ private let _id_oled = InputDataIdentifier("_id_oled")
 private let _id_ghost_all = InputDataIdentifier("_id_ghost_all")
 private let _id_keep_deleted = InputDataIdentifier("_id_keep_deleted")
 private let _id_keep_edits = InputDataIdentifier("_id_keep_edits")
+private let _id_bypass_protection = InputDataIdentifier("_id_bypass_protection")
+private let _id_view_once = InputDataIdentifier("_id_view_once")
+private let _id_view_once_secret = InputDataIdentifier("_id_view_once_secret")
 private func _id_ghost(_ key: String) -> InputDataIdentifier {
     return InputDataIdentifier("_id_ghost_\(key)")
 }
@@ -215,18 +218,49 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
 
             //TODOLANG
             entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_keep_deleted, data: .init(name: "Keep Deleted Messages", color: theme.colors.text, type: .switchable(state.values.keepDeletedMessages), viewType: .firstItem, action: {
-                arguments.toggleHistory(\.keepDeletedMessages)
+                arguments.toggleValue(\.keepDeletedMessages)
             })))
             index += 1
 
             //TODOLANG
             entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_keep_edits, data: .init(name: "Keep Edit History", color: theme.colors.text, type: .switchable(state.values.keepEditHistory), viewType: .lastItem, action: {
-                arguments.toggleHistory(\.keepEditHistory)
+                arguments.toggleValue(\.keepEditHistory)
             })))
             index += 1
 
             //TODOLANG
             entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Messages that others delete stay in the chat with a \"deleted\" mark. Earlier versions of edited messages are kept on this Mac; right-click a message to see them. Only what this Mac receives while running is saved."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+            index += 1
+
+            entries.append(.sectionId(sectionId, type: .normal))
+            sectionId += 1
+
+            //TODOLANG
+            entries.append(.desc(sectionId: sectionId, index: index, text: .plain("PROTECTED CONTENT"), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+            index += 1
+
+            //TODOLANG
+            entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_bypass_protection, data: .init(name: "Allow Copying and Saving", color: theme.colors.text, type: .switchable(state.values.bypassContentProtection), viewType: .firstItem, action: {
+                arguments.toggleValue(\.bypassContentProtection)
+            })))
+            index += 1
+
+            //TODOLANG
+            entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_view_once, data: .init(name: "Open Self-Destructing Media Unseen", color: theme.colors.text, type: .switchable(state.values.viewOnceWithoutMarking), viewType: state.values.viewOnceWithoutMarking ? .innerItem : .lastItem, action: {
+                arguments.toggleValue(\.viewOnceWithoutMarking)
+            })))
+            index += 1
+
+            if state.values.viewOnceWithoutMarking {
+                //TODOLANG
+                entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_view_once_secret, data: .init(name: "Also in Secret Chats", color: theme.colors.redUI, type: .switchable(state.values.viewOnceInSecretChats), viewType: .lastItem, action: {
+                    arguments.toggleValue(\.viewOnceInSecretChats)
+                })))
+                index += 1
+            }
+
+            //TODOLANG
+            entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Copy text, select, save and drag media from chats that forbid it. Forwarding such messages sends a copy: files are downloaded and uploaded again, without a \"forwarded from\" header. Self-destructing photos, videos and voice messages open without starting their timer, so the sender is not told and they stay in the chat. Secret chats are the most private place in Telegram; keep them out unless you must."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
             index += 1
         }
     } else {
@@ -310,7 +344,7 @@ public func TauSettingsController(context: any AccountContextProtocol) -> InputD
         } else {
             toggleTauGhostMode()
         }
-    }, toggleHistory: { keyPath in
+    }, toggleValue: { keyPath in
         TauSettings.shared.update { current in
             var current = current
             current[keyPath: keyPath] = !current[keyPath: keyPath]

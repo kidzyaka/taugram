@@ -32,6 +32,9 @@ public extension Peer {
         return isCopyProtected(cachedData: nil)
     }
     func isCopyProtected(cachedData: CachedPeerData?) -> Bool {
+        if TauCoreSettings.shared.bypassesContentProtection { // Taugram
+            return false
+        }
         if let peer = self as? TelegramGroup {
             return peer.flags.contains(.copyProtectionEnabled) && !peer.groupAccess.isCreator
         } else if let peer = self as? TelegramChannel {

@@ -1130,7 +1130,7 @@ public func TranslateModalController(context: any AccountContextProtocol, from: 
             var isProtected = true
             if let message = transaction.getMessage(messageId) {
                 isProtected = message.containsSecretMedia || message.isCopyProtected()
-                if !isProtected, let cachedData = transaction.getPeerCachedData(peerId: messageId.peerId) as? CachedUserData {
+                if !isProtected, !TauCoreSettings.shared.bypassesContentProtection, let cachedData = transaction.getPeerCachedData(peerId: messageId.peerId) as? CachedUserData { // Taugram
                     isProtected = cachedData.flags.contains(.copyProtectionEnabled) || cachedData.flags.contains(.myCopyProtectionEnabled)
                 }
             }

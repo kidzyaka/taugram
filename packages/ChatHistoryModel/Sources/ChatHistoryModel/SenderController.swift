@@ -582,7 +582,7 @@ public class Sender: NSObject {
         for msgId in sorted {
             fwdMessages.append(EnqueueMessage.forward(source: msgId, threadId: threadId, grouping: messageIds.count > 1 ? .auto : .none, attributes: attributes, correlationId: nil))
         }
-        return enqueueMessages(account: context.account, peerId: peerId, messages: fwdMessages.reversed())
+        return tauForwardMessages(messageIds: messageIds, context: context, peerId: peerId, threadId: threadId, attributes: attributes, regular: enqueueMessages(account: context.account, peerId: peerId, messages: fwdMessages.reversed())) // Taugram
     }
     
     public static func shareContact(context: any AccountContextProtocol, peerId:PeerId, media:Media, replyId: EngineMessageReplySubject?, threadId: Int64?, sendAsPeerId: PeerId? = nil, sendPaidMessageStars: StarsAmount? = nil) -> Signal<[MessageId?], NoError>  {
