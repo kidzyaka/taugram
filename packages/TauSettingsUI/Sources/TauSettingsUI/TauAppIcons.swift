@@ -8,6 +8,14 @@ public enum TauAppIcon: String, CaseIterable {
     case ocean
     case midnight
     case paper
+    case tauCeti
+    case og
+    case paperPlane
+    case synthwave
+    case pixel
+    case liquidGlass
+    case blueprint
+    case terminal
 
     var title: String {
         switch self {
@@ -26,45 +34,48 @@ public enum TauAppIcon: String, CaseIterable {
         case .paper:
             //TODOLANG
             return "Paper"
+        case .tauCeti:
+            //TODOLANG
+            return "Tau Ceti"
+        case .og:
+            //TODOLANG
+            return "OG"
+        case .paperPlane:
+            //TODOLANG
+            return "Paper Plane"
+        case .synthwave:
+            //TODOLANG
+            return "Synthwave"
+        case .pixel:
+            //TODOLANG
+            return "Pixel"
+        case .liquidGlass:
+            //TODOLANG
+            return "Liquid Glass"
+        case .blueprint:
+            //TODOLANG
+            return "Blueprint"
+        case .terminal:
+            //TODOLANG
+            return "Terminal"
         }
     }
 
-    fileprivate var background: (NSColor, NSColor) {
+    fileprivate var flatStyle: (top: NSColor, bottom: NSColor, glyph: NSColor)? {
+        let violet = NSColor(srgbRed: 0.561, green: 0.400, blue: 0.941, alpha: 1)
         switch self {
         case .classic, .violet:
-            return (NSColor(srgbRed: 0.561, green: 0.400, blue: 0.941, alpha: 1), NSColor(srgbRed: 0.369, green: 0.208, blue: 0.804, alpha: 1))
+            return (violet, NSColor(srgbRed: 0.369, green: 0.208, blue: 0.804, alpha: 1), .white)
         case .ocean:
-            return (NSColor(srgbRed: 0.247, green: 0.663, blue: 0.961, alpha: 1), NSColor(srgbRed: 0.118, green: 0.435, blue: 0.851, alpha: 1))
+            return (NSColor(srgbRed: 0.247, green: 0.663, blue: 0.961, alpha: 1), NSColor(srgbRed: 0.118, green: 0.435, blue: 0.851, alpha: 1), .white)
         case .midnight:
-            return (NSColor(srgbRed: 0.102, green: 0.102, blue: 0.133, alpha: 1), NSColor(srgbRed: 0.020, green: 0.020, blue: 0.031, alpha: 1))
+            return (NSColor(srgbRed: 0.102, green: 0.102, blue: 0.133, alpha: 1), NSColor(srgbRed: 0.020, green: 0.020, blue: 0.031, alpha: 1), violet)
         case .paper:
-            return (NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 1), NSColor(srgbRed: 0.925, green: 0.925, blue: 0.949, alpha: 1))
+            return (NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 1), NSColor(srgbRed: 0.925, green: 0.925, blue: 0.949, alpha: 1), violet)
+        case .tauCeti, .og, .paperPlane, .synthwave, .pixel, .liquidGlass, .blueprint, .terminal:
+            return nil
         }
     }
-
-    fileprivate var glyph: NSColor {
-        switch self {
-        case .classic, .violet, .ocean:
-            return .white
-        case .midnight, .paper:
-            return NSColor(srgbRed: 0.561, green: 0.400, blue: 0.941, alpha: 1)
-        }
-    }
-}
-
-private func drawTauGlyph(in ctx: CGContext, color: NSColor, lineWidth: CGFloat) {
-    ctx.setStrokeColor(color.cgColor)
-    ctx.setLineWidth(lineWidth)
-    ctx.setLineCap(.round)
-    ctx.setLineJoin(.round)
-    ctx.move(to: CGPoint(x: 318, y: 420))
-    ctx.addCurve(to: CGPoint(x: 404, y: 340), control1: CGPoint(x: 318, y: 368), control2: CGPoint(x: 352, y: 340))
-    ctx.addLine(to: CGPoint(x: 712, y: 340))
-    ctx.move(to: CGPoint(x: 530, y: 340))
-    ctx.addLine(to: CGPoint(x: 530, y: 612))
-    ctx.addCurve(to: CGPoint(x: 604, y: 690), control1: CGPoint(x: 530, y: 664), control2: CGPoint(x: 556, y: 690))
-    ctx.addCurve(to: CGPoint(x: 668, y: 668), control1: CGPoint(x: 632, y: 690), control2: CGPoint(x: 652, y: 682))
-    ctx.strokePath()
 }
 
 private func drawTauIcon(_ icon: TauAppIcon, in ctx: CGContext, size: CGFloat, topDown: Bool, inset: CGFloat, cornerRadius: CGFloat) {
@@ -75,15 +86,38 @@ private func drawTauIcon(_ icon: TauAppIcon, in ctx: CGContext, size: CGFloat, t
         ctx.scaleBy(x: 1, y: -1)
     }
     ctx.scaleBy(x: scale, y: scale)
-    let rect = CGRect(x: inset, y: inset, width: 1024 - inset * 2, height: 1024 - inset * 2)
-    ctx.addPath(CGPath(roundedRect: rect, cornerWidth: cornerRadius, cornerHeight: cornerRadius, transform: nil))
-    ctx.clip()
-    let colors = [icon.background.0.cgColor, icon.background.1.cgColor] as CFArray
-    if let gradient = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB), colors: colors, locations: [0, 1]) {
-        ctx.drawLinearGradient(gradient, start: CGPoint(x: 0, y: rect.minY), end: CGPoint(x: 0, y: rect.maxY), options: [])
+    switch icon {
+    case .tauCeti:
+        drawTauCetiIcon(in: ctx, inset: inset, cornerRadius: cornerRadius)
+    case .og:
+        drawOGIcon(in: ctx, inset: inset)
+    case .paperPlane:
+        drawPaperPlaneIcon(in: ctx, inset: inset, cornerRadius: cornerRadius)
+    case .synthwave:
+        drawSynthwaveIcon(in: ctx, inset: inset, cornerRadius: cornerRadius)
+    case .pixel:
+        drawPixelIcon(in: ctx, inset: inset, cornerRadius: cornerRadius)
+    case .liquidGlass:
+        drawLiquidGlassIcon(in: ctx, inset: inset, cornerRadius: cornerRadius)
+    case .blueprint:
+        drawBlueprintIcon(in: ctx, inset: inset, cornerRadius: cornerRadius)
+    case .terminal:
+        drawTerminalIcon(in: ctx, inset: inset, cornerRadius: cornerRadius)
+    case .classic, .violet, .ocean, .midnight, .paper:
+        guard let style = icon.flatStyle else {
+            break
+        }
+        let rect = CGRect(x: inset, y: inset, width: 1024 - inset * 2, height: 1024 - inset * 2)
+        ctx.saveGState()
+        ctx.addPath(CGPath(roundedRect: rect, cornerWidth: cornerRadius, cornerHeight: cornerRadius, transform: nil))
+        ctx.clip()
+        let colors = [style.top.cgColor, style.bottom.cgColor] as CFArray
+        if let gradient = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB), colors: colors, locations: [0, 1]) {
+            ctx.drawLinearGradient(gradient, start: CGPoint(x: 0, y: rect.minY), end: CGPoint(x: 0, y: rect.maxY), options: [])
+        }
+        ctx.restoreGState()
+        strokeTauPath(ctx, tauGlyphPath(), color: style.glyph.cgColor, width: 84)
     }
-    ctx.resetClip()
-    drawTauGlyph(in: ctx, color: icon.glyph, lineWidth: 84)
     ctx.restoreGState()
 }
 
