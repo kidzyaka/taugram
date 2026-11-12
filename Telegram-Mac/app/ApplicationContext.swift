@@ -916,6 +916,7 @@ final class AuthorizedApplicationContext: NSObject, SplitViewDelegate {
             }
         }))
         presentTaugramConsentIfNeeded(window: window) // Taugram
+        installTaugramMCP(context: context, window: window) // Taugram
         
 
         someActionsDisposable.add(context.engine.peers.managedUpdatedRecentPeers().start())

@@ -59,6 +59,11 @@ public struct TauSettingsValues: Codable, Equatable {
     public var showSelfDestructingOnMac: Bool = false
     public var lockedChats: [Int64] = []
     public var touchIdChats: [Int64] = []
+    public var mcpEnabled: Bool = false
+    public var mcpPort: Int = 19815
+    public var mcpAllowSending: Bool = false
+    public var mcpConfirmSending: Bool = true
+    public var mcpTrustedChats: [Int64] = []
     public var showMessageSeconds: Bool = false
     public var hideStoriesInChatList: Bool = false
     public var appIcon: String?
@@ -82,6 +87,11 @@ public struct TauSettingsValues: Codable, Equatable {
         self.showSelfDestructingOnMac = try container.decodeIfPresent(Bool.self, forKey: .showSelfDestructingOnMac) ?? false
         self.lockedChats = try container.decodeIfPresent([Int64].self, forKey: .lockedChats) ?? []
         self.touchIdChats = try container.decodeIfPresent([Int64].self, forKey: .touchIdChats) ?? []
+        self.mcpEnabled = try container.decodeIfPresent(Bool.self, forKey: .mcpEnabled) ?? false
+        self.mcpPort = try container.decodeIfPresent(Int.self, forKey: .mcpPort) ?? 19815
+        self.mcpAllowSending = try container.decodeIfPresent(Bool.self, forKey: .mcpAllowSending) ?? false
+        self.mcpConfirmSending = try container.decodeIfPresent(Bool.self, forKey: .mcpConfirmSending) ?? true
+        self.mcpTrustedChats = try container.decodeIfPresent([Int64].self, forKey: .mcpTrustedChats) ?? []
         self.showMessageSeconds = try container.decodeIfPresent(Bool.self, forKey: .showMessageSeconds) ?? false
         self.hideStoriesInChatList = try container.decodeIfPresent(Bool.self, forKey: .hideStoriesInChatList) ?? false
         self.appIcon = try container.decodeIfPresent(String.self, forKey: .appIcon)

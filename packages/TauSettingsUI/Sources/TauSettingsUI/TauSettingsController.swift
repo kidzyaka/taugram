@@ -22,7 +22,8 @@ private final class Arguments {
     let toggleValue: (WritableKeyPath<TauSettingsValues, Bool>) -> Void
     let chatLock: (TauChatLockAction) -> Void
     let openColorEditor: () -> Void
-    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void, toggleValue: @escaping (WritableKeyPath<TauSettingsValues, Bool>) -> Void, chatLock: @escaping (TauChatLockAction) -> Void, openColorEditor: @escaping () -> Void) {
+    let mcp: (TauMCPAction) -> Void
+    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void, toggleValue: @escaping (WritableKeyPath<TauSettingsValues, Bool>) -> Void, chatLock: @escaping (TauChatLockAction) -> Void, openColorEditor: @escaping () -> Void, mcp: @escaping (TauMCPAction) -> Void) {
         self.toggleDangerousFeatures = toggleDangerousFeatures
         self.reviewConsent = reviewConsent
         self.selectAppIcon = selectAppIcon
@@ -34,7 +35,18 @@ private final class Arguments {
         self.toggleValue = toggleValue
         self.chatLock = chatLock
         self.openColorEditor = openColorEditor
+        self.mcp = mcp
     }
+}
+
+enum TauMCPAction {
+    case toggle
+    case copyConfig
+    case toggleSending
+    case toggleConfirm
+    case clearTrusted
+    case regenerateToken
+    case openLog
 }
 
 enum TauChatLockAction {
@@ -46,6 +58,8 @@ enum TauChatLockAction {
 private struct State: Equatable {
     var values: TauSettingsValues
     var chatLockHasPasscode: Bool
+    var mcpState: String
+    var mcpLogCount: Int
     var coreDangerousFeaturesAllowed: Bool
     var canViewPeerId: Bool
 }
@@ -66,6 +80,13 @@ private let _id_hide_stories = InputDataIdentifier("_id_hide_stories")
 private let _id_peer_id = InputDataIdentifier("_id_peer_id")
 private let _id_oled = InputDataIdentifier("_id_oled")
 private let _id_color_editor = InputDataIdentifier("_id_color_editor")
+private let _id_mcp_enabled = InputDataIdentifier("_id_mcp_enabled")
+private let _id_mcp_copy = InputDataIdentifier("_id_mcp_copy")
+private let _id_mcp_sending = InputDataIdentifier("_id_mcp_sending")
+private let _id_mcp_confirm = InputDataIdentifier("_id_mcp_confirm")
+private let _id_mcp_token = InputDataIdentifier("_id_mcp_token")
+private let _id_mcp_log = InputDataIdentifier("_id_mcp_log")
+private let _id_mcp_trusted = InputDataIdentifier("_id_mcp_trusted")
 private let _id_chat_lock_set = InputDataIdentifier("_id_chat_lock_set")
 private let _id_chat_lock_change = InputDataIdentifier("_id_chat_lock_change")
 private let _id_chat_lock_remove = InputDataIdentifier("_id_chat_lock_remove")
@@ -215,6 +236,63 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
         index += 1
         //TODOLANG
         entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Hide chats behind a passcode. After you set one, choose Lock Chat in a chat's menu in the chat list."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+        index += 1
+    }
+
+    entries.append(.sectionId(sectionId, type: .normal))
+    sectionId += 1
+
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("AGENTS (MCP)"), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+    index += 1
+
+    //TODOLANG
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_mcp_enabled, data: .init(name: "Allow Agent Access", color: theme.colors.text, type: .switchable(state.values.mcpEnabled), viewType: state.values.mcpEnabled ? .firstItem : .singleItem, action: {
+        arguments.mcp(.toggle)
+    })))
+    index += 1
+
+    if state.values.mcpEnabled {
+        //TODOLANG
+        entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_mcp_copy, data: .init(name: "Copy Config for Claude Code", color: theme.colors.accent, type: .none, viewType: .innerItem, action: {
+            arguments.mcp(.copyConfig)
+        })))
+        index += 1
+        //TODOLANG
+        entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_mcp_sending, data: .init(name: "Allow Sending Messages", color: theme.colors.text, type: .switchable(state.values.mcpAllowSending), viewType: .innerItem, action: {
+            arguments.mcp(.toggleSending)
+        })))
+        index += 1
+        if state.values.mcpAllowSending {
+            //TODOLANG
+            entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_mcp_confirm, data: .init(name: "Confirm Each Message", color: theme.colors.text, type: .switchable(state.values.mcpConfirmSending), viewType: .innerItem, action: {
+                arguments.mcp(.toggleConfirm)
+            })))
+            index += 1
+            if state.values.mcpConfirmSending && !state.values.mcpTrustedChats.isEmpty {
+                //TODOLANG
+                entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_mcp_trusted, data: .init(name: "Forget Trusted Chats", color: theme.colors.accent, type: .context("\(state.values.mcpTrustedChats.count)"), viewType: .innerItem, action: {
+                    arguments.mcp(.clearTrusted)
+                })))
+                index += 1
+            }
+        }
+        //TODOLANG
+        entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_mcp_log, data: .init(name: "Agent Activity", color: theme.colors.text, type: .nextContext("\(state.mcpLogCount)"), viewType: .innerItem, action: {
+            arguments.mcp(.openLog)
+        })))
+        index += 1
+        //TODOLANG
+        entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_mcp_token, data: .init(name: "Revoke Token", color: theme.colors.redUI, type: .none, viewType: .lastItem, action: {
+            arguments.mcp(.regenerateToken)
+        })))
+        index += 1
+        //TODOLANG
+        entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Status: \(state.mcpState). Agents connect to http://127.0.0.1:\(state.values.mcpPort)/mcp with the token from the copied config. Reading never marks messages as read. Locked and secret chats are hidden. Sending is limited to 10 messages a minute. With Confirm Each Message off, agents send without asking; with it on, you can trust a chat from the confirmation window so that chat skips the question. Revoking the token disconnects every agent until you copy the new config."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+        index += 1
+    } else {
+        //TODOLANG
+        entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Let AI agents like Claude Code read your chats over MCP and, if you allow it, send messages."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
         index += 1
     }
 
@@ -423,11 +501,44 @@ public func TauSettingsController(context: any AccountContextProtocol) -> InputD
         }
     }, openColorEditor: {
         getController?()?.navigationController?.push(TauColorEditorController(context: context))
+    }, mcp: { action in
+        switch action {
+        case .toggle:
+            toggleTauMCP(window: window)
+        case .copyConfig:
+            copyTauMCPConfig()
+            //TODOLANG
+            showModalText(for: window, text: "Config copied. Paste it into your MCP client settings.")
+        case .toggleSending:
+            TauSettings.shared.update { current in
+                var current = current
+                current.mcpAllowSending = !current.mcpAllowSending
+                return current
+            }
+        case .toggleConfirm:
+            TauSettings.shared.update { current in
+                var current = current
+                current.mcpConfirmSending = !current.mcpConfirmSending
+                return current
+            }
+        case .clearTrusted:
+            TauSettings.shared.update { current in
+                var current = current
+                current.mcpTrustedChats = []
+                return current
+            }
+        case .regenerateToken:
+            TauMCPServer.shared.regenerateToken()
+            //TODOLANG
+            showModalText(for: window, text: "Token revoked. Copy the config again to reconnect agents.")
+        case .openLog:
+            getController?()?.navigationController?.push(TauMCPLogController())
+        }
     })
 
     let chatLockChanges = Signal<Void, NoError>.single(Void()) |> then(TauChatLock.shared.changes)
-    let signal = combineLatest(TauSettings.shared.signal, canViewPeerId.get(), chatLockChanges) |> map { values, canViewPeerId, _ in
-        return State(values: values, chatLockHasPasscode: TauChatLock.shared.hasPasscode, coreDangerousFeaturesAllowed: TauCoreSettings.shared.dangerousFeaturesAllowed, canViewPeerId: canViewPeerId)
+    let signal = combineLatest(TauSettings.shared.signal, canViewPeerId.get(), chatLockChanges, TauMCPServer.shared.state, TauMCPServer.shared.log |> map { $0.count }) |> map { values, canViewPeerId, _, mcpState, mcpLogCount in
+        return State(values: values, chatLockHasPasscode: TauChatLock.shared.hasPasscode, mcpState: mcpState, mcpLogCount: mcpLogCount, coreDangerousFeaturesAllowed: TauCoreSettings.shared.dangerousFeaturesAllowed, canViewPeerId: canViewPeerId)
     } |> deliverOnPrepareQueue |> map { state in
         return InputDataSignalValue(entries: entries(state, arguments: arguments))
     }

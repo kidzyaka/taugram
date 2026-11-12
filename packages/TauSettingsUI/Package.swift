@@ -14,6 +14,7 @@ let deps: [(String, String)] = [
     ("GeneralRows", "../GeneralRows"),
     ("ThemeSettings", "../ThemeSettings"),
     ("ColorPalette", "../ColorPalette"),
+    ("AlertsUI", "../AlertsUI"),
 ]
 
 let package = Package(
