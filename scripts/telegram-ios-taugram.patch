@@ -1,3 +1,16 @@
+diff --git a/submodules/TelegramCore/Sources/Account/AccountManager.swift b/submodules/TelegramCore/Sources/Account/AccountManager.swift
+index c3c37c555de662b93fa00d8d5cfec50c5ed5f661..e319a7bdfe0a218aa8b2d1e64c97332160356f33 100644
+--- a/submodules/TelegramCore/Sources/Account/AccountManager.swift
++++ b/submodules/TelegramCore/Sources/Account/AccountManager.swift
+@@ -140,6 +140,8 @@ private var declaredEncodables: Void = {
+     declareEncodable(SourceReferenceMessageAttribute.self, f: { SourceReferenceMessageAttribute(decoder: $0) })
+     declareEncodable(SourceAuthorInfoMessageAttribute.self, f: { SourceAuthorInfoMessageAttribute(decoder: $0) })
+     declareEncodable(EditedMessageAttribute.self, f: { EditedMessageAttribute(decoder: $0) })
++    declareEncodable(TauDeletedMessageAttribute.self, f: { TauDeletedMessageAttribute(decoder: $0) }) // Taugram
++    declareEncodable(TauEditHistoryMessageAttribute.self, f: { TauEditHistoryMessageAttribute(decoder: $0) }) // Taugram
+     declareEncodable(ReplyMarkupMessageAttribute.self, f: { ReplyMarkupMessageAttribute(decoder: $0) })
+     declareEncodable(OutgoingChatContextResultMessageAttribute.self, f: { OutgoingChatContextResultMessageAttribute(decoder: $0) })
+     declareEncodable(HttpReferenceMediaResource.self, f: { HttpReferenceMediaResource(decoder: $0) })
 diff --git a/submodules/TelegramCore/Sources/State/AccountViewTracker.swift b/submodules/TelegramCore/Sources/State/AccountViewTracker.swift
 index 964f7602e1ef27ff35a02dddfe321effff5e3e9c..e23d46d0644d406553b7156c1fa63fb7ad06ede3 100644
 --- a/submodules/TelegramCore/Sources/State/AccountViewTracker.swift
@@ -25,6 +38,34 @@ index 964f7602e1ef27ff35a02dddfe321effff5e3e9c..e23d46d0644d406553b7156c1fa63fb7
                                      |> map { _ in true }
                                  default:
                                      return .complete()
+diff --git a/submodules/TelegramCore/Sources/State/HistoryViewStateValidation.swift b/submodules/TelegramCore/Sources/State/HistoryViewStateValidation.swift
+index 3dc6c7d5b63ebd351a1e41b40b204f1b31090595..4341a62ed617106e3e509c39db6581f235dce227 100644
+--- a/submodules/TelegramCore/Sources/State/HistoryViewStateValidation.swift
++++ b/submodules/TelegramCore/Sources/State/HistoryViewStateValidation.swift
+@@ -991,6 +991,14 @@ private func validateBatch(postbox: Postbox, network: Network, transaction: Tran
+                                         }
+                                         return .update(StoreMessage(id: currentMessage.id, customStableId: nil, globallyUniqueId: currentMessage.globallyUniqueId, groupingKey: currentMessage.groupingKey, threadId: currentMessage.threadId, timestamp: currentMessage.timestamp, flags: StoreMessageFlags(currentMessage.flags), tags: updatedTags, globalTags: currentMessage.globalTags, localTags: currentMessage.localTags, forwardInfo: storeForwardInfo, authorId: currentMessage.author?.id, text: currentMessage.text, attributes: attributes, media: currentMessage.media))
+                                     })
++                                } else if tauKeepsMessageAgainstValidation(transaction: transaction, id: id) { // Taugram
++                                    if case let .channel(_, channelState) = historyState {
++                                        transaction.updateMessage(id, update: { currentMessage in
++                                            var attributes = currentMessage.attributes.filter { !($0 is ChannelMessageStateVersionAttribute) }
++                                            attributes.append(ChannelMessageStateVersionAttribute(pts: channelState.pts))
++                                            return .update(StoreMessage(updating: currentMessage, attributes: attributes, tags: currentMessage.tags))
++                                        })
++                                    }
+                                 } else {
+                                     _internal_deleteMessages(transaction: transaction, mediaBox: postbox.mediaBox, ids: [id])
+                                     Logger.shared.log("HistoryValidation", "deleting message \(id) in \(id.peerId)")
+@@ -1174,7 +1182,7 @@ private func validateReplyThreadBatch(postbox: Postbox, network: Network, transa
+                     }
+                 
+                     for id in removedMessageIds {
+-                        if !validMessageIds.contains(id) {
++                        if !validMessageIds.contains(id) && !tauKeepsMessageAgainstValidation(transaction: transaction, id: id) { // Taugram
+                             _internal_deleteMessages(transaction: transaction, mediaBox: postbox.mediaBox, ids: [id])
+                             Logger.shared.log("HistoryValidation", "deleting thread message \(id) in \(id.peerId)")
+                         }
 diff --git a/submodules/TelegramCore/Sources/State/ManagedAccountPresence.swift b/submodules/TelegramCore/Sources/State/ManagedAccountPresence.swift
 index 7256668bf953823b2c324642f04290174fbf3825..f6bc831d0262a02be7d0f65ccb621d1476617588 100644
 --- a/submodules/TelegramCore/Sources/State/ManagedAccountPresence.swift
@@ -135,6 +176,64 @@ index e38c0f96c77041c97293f8cc2c0386ebf62274ed..0d0e253578e682add1b3094790235330
      |> `catch` { _ -> Signal<[Int32], NoError> in
          return .single([])
      }
+diff --git a/submodules/TelegramCore/Sources/State/StoredMessageConfirmation.swift b/submodules/TelegramCore/Sources/State/StoredMessageConfirmation.swift
+index 49d68a3791e25e97ce82d98076fc54ae4d50aca6..0a55b09847ef451814c43ffbe89aaf99f15758c7 100644
+--- a/submodules/TelegramCore/Sources/State/StoredMessageConfirmation.swift
++++ b/submodules/TelegramCore/Sources/State/StoredMessageConfirmation.swift
+@@ -213,7 +213,7 @@ func confirmStoredMessages(accountPeerId: PeerId, postbox: Postbox, source: Fetc
+ func deleteStoredMessagesAsReceivedDeletion(transaction: Transaction, mediaBox: MediaBox, ids: [MessageId]) -> [MessageId] {
+     var regularIds: [MessageId] = []
+     var channelIds: [MessageId] = []
+-    for id in ids {
++    for id in tauKeepDeletedMessages(transaction: transaction, ids: ids) { // Taugram
+         if id.peerId.namespace == Namespaces.Peer.CloudChannel {
+             channelIds.append(id)
+         } else {
+diff --git a/submodules/TelegramCore/Sources/State/Sync/StateReplay+Messages.swift b/submodules/TelegramCore/Sources/State/Sync/StateReplay+Messages.swift
+index cf1ab15d9cfae956abcb53bf5060db525b32448d..07a894a063943e0337823d07e9d5f4c8d3a67d46 100644
+--- a/submodules/TelegramCore/Sources/State/Sync/StateReplay+Messages.swift
++++ b/submodules/TelegramCore/Sources/State/Sync/StateReplay+Messages.swift
+@@ -275,7 +275,7 @@ extension ReplayContext {
+     
+     func applyDeleteMessagesWithGlobalIds(_ ids: [Int32]) {
+         var resourceIds: [MediaResourceId] = []
+-        transaction.deleteMessagesWithGlobalIds(ids, forEachMedia: { media in
++        transaction.deleteMessagesWithGlobalIds(tauKeepDeletedMessages(transaction: transaction, globalIds: ids), forEachMedia: { media in // Taugram
+             addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)
+         })
+         if !resourceIds.isEmpty {
+@@ -285,7 +285,7 @@ extension ReplayContext {
+     }
+     
+     func applyDeleteMessages(_ ids: [MessageId]) {
+-        _internal_deleteMessages(transaction: transaction, mediaBox: mediaBox, ids: ids, manualAddMessageThreadStatsDifference: { id, add, remove in
++        _internal_deleteMessages(transaction: transaction, mediaBox: mediaBox, ids: tauKeepDeletedMessages(transaction: transaction, ids: ids), manualAddMessageThreadStatsDifference: { id, add, remove in // Taugram
+             self.addMessageThreadStatsDifference(threadKey: id, remove: remove, addedMessagePeer: nil, addedMessageId: nil, isOutgoing: false)
+         })
+         deletedMessageIds.append(contentsOf: ids.map { .messageId($0) })
+@@ -295,6 +295,9 @@ extension ReplayContext {
+         if let message = transaction.getMessage(id) {
+             updatePeerChatInclusionWithMinTimestamp(transaction: transaction, id: id.peerId, minTimestamp: message.timestamp, forceRootGroupIfNotExists: false)
+         }
++        if tauKeepsDeletedMessagesInRange(transaction: transaction, peerId: id.peerId, namespace: id.namespace, maxId: id.id) { // Taugram
++            return
++        }
+         var resourceIds: [MediaResourceId] = []
+         transaction.deleteMessagesInRange(peerId: id.peerId, namespace: id.namespace, minId: 1, maxId: id.id, forEachMedia: { media in
+             addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)
+@@ -317,7 +320,11 @@ extension ReplayContext {
+                 generatedEvent = reactionGeneratedEvent(previousMessage.reactionsAttribute, message.reactionsAttribute, message: message, transaction: transaction)
+             }
+ 
+-            return .update(mergedServerMessageUpdate(previous: previousMessage, updated: message))
++            var merged = mergedServerMessageUpdate(previous: previousMessage, updated: message) // Taugram
++            if let history = tauEditHistoryAttribute(previous: previousMessage, updated: merged) { // Taugram
++                merged = merged.withUpdatedAttributes(merged.attributes.filter { !($0 is TauEditHistoryMessageAttribute) } + [history]) // Taugram
++            }
++            return .update(merged) // Taugram
+         })
+         // A fetch in flight may be bringing the message with its old content, over the edited one or, with none stored
+         // here, instead of it; it stores this edit in its place (Postbox's record of recent edits,
 diff --git a/submodules/TelegramCore/Sources/State/SynchronizePeerReadState.swift b/submodules/TelegramCore/Sources/State/SynchronizePeerReadState.swift
 index b2e65895ccd2f29f003474b051fee81c6f3819ed..1e172d9feb5355a929d565b63b621bd0e7689c44 100644
 --- a/submodules/TelegramCore/Sources/State/SynchronizePeerReadState.swift
@@ -167,6 +266,18 @@ index b2e65895ccd2f29f003474b051fee81c6f3819ed..1e172d9feb5355a929d565b63b621bd0
      if peerId.namespace == Namespaces.Peer.SecretChat {
          // Decide whether a request is needed before looking the peer up: inputSecretChat goes
          // through loadedPeerWithId, which never emits when the peer row is missing and fails
+diff --git a/submodules/TelegramCore/Sources/SyncCore/SyncCore_StandaloneAccountTransaction.swift b/submodules/TelegramCore/Sources/SyncCore/SyncCore_StandaloneAccountTransaction.swift
+index 91c5c772f3abbc45895387981e3f960ac2628938..555ee97852875c1b75d8294d8a4576ce52dde2f4 100644
+--- a/submodules/TelegramCore/Sources/SyncCore/SyncCore_StandaloneAccountTransaction.swift
++++ b/submodules/TelegramCore/Sources/SyncCore/SyncCore_StandaloneAccountTransaction.swift
+@@ -123,6 +123,7 @@ public let telegramPostboxSeedConfiguration: SeedConfiguration = {
+             if previous.isEmpty {
+                 return
+             }
++            tauMergeMessageAttributes(previous: previous, updated: &updated) // Taugram
+             var audioTranscription: AudioTranscriptionMessageAttribute?
+             for attribute in previous {
+                 if let attribute = attribute as? AudioTranscriptionMessageAttribute {
 diff --git a/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift b/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift
 new file mode 100644
 index 0000000000000000000000000000000000000000..8bc87a748b54d3fd8a30a00c9c442677a8bc901c
@@ -293,6 +404,235 @@ index 0000000000000000000000000000000000000000..a4186c9cc06cc05b88903f555b28530a
 +        return TauGhostNetwork(network: self, blocked: TauCoreSettings.shared.ghost[keyPath: keyPath])
 +    }
 +}
+diff --git a/submodules/TelegramCore/Sources/Tau/TauMessageHistory.swift b/submodules/TelegramCore/Sources/Tau/TauMessageHistory.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..8b06ca77bd3f6ca5a954ef4e1ab64aecbcb6a9f6
+--- /dev/null
++++ b/submodules/TelegramCore/Sources/Tau/TauMessageHistory.swift
+@@ -0,0 +1,223 @@
++import Foundation
++import Postbox
++
++public final class TauDeletedMessageAttribute: MessageAttribute, Equatable {
++    public let date: Int32
++
++    public var associatedPeerIds: [PeerId] {
++        return []
++    }
++
++    public init(date: Int32) {
++        self.date = date
++    }
++
++    required public init(decoder: PostboxDecoder) {
++        self.date = decoder.decodeInt32ForKey("d", orElse: 0)
++    }
++
++    public func encode(_ encoder: PostboxEncoder) {
++        encoder.encodeInt32(self.date, forKey: "d")
++    }
++
++    public static func ==(lhs: TauDeletedMessageAttribute, rhs: TauDeletedMessageAttribute) -> Bool {
++        return lhs.date == rhs.date
++    }
++}
++
++public final class TauEditHistoryMessageAttribute: MessageAttribute, Equatable {
++    public struct Version: PostboxCoding, Equatable {
++        public let text: String
++        public let entities: [MessageTextEntity]
++        public let date: Int32
++
++        public init(text: String, entities: [MessageTextEntity], date: Int32) {
++            self.text = text
++            self.entities = entities
++            self.date = date
++        }
++
++        public init(decoder: PostboxDecoder) {
++            self.text = decoder.decodeStringForKey("t", orElse: "")
++            self.entities = decoder.decodeObjectArrayWithDecoderForKey("e")
++            self.date = decoder.decodeInt32ForKey("d", orElse: 0)
++        }
++
++        public func encode(_ encoder: PostboxEncoder) {
++            encoder.encodeString(self.text, forKey: "t")
++            encoder.encodeObjectArray(self.entities, forKey: "e")
++            encoder.encodeInt32(self.date, forKey: "d")
++        }
++    }
++
++    public static let maxVersions = 50
++
++    public let versions: [Version]
++
++    public var associatedPeerIds: [PeerId] {
++        return []
++    }
++
++    public init(versions: [Version]) {
++        self.versions = versions
++    }
++
++    required public init(decoder: PostboxDecoder) {
++        self.versions = decoder.decodeObjectArrayWithDecoderForKey("v")
++    }
++
++    public func encode(_ encoder: PostboxEncoder) {
++        encoder.encodeObjectArray(self.versions, forKey: "v")
++    }
++
++    public static func ==(lhs: TauEditHistoryMessageAttribute, rhs: TauEditHistoryMessageAttribute) -> Bool {
++        return lhs.versions == rhs.versions
++    }
++}
++
++public extension Message {
++    var tauDeletedAttribute: TauDeletedMessageAttribute? {
++        for attribute in self.attributes {
++            if let attribute = attribute as? TauDeletedMessageAttribute {
++                return attribute
++            }
++        }
++        return nil
++    }
++
++    var tauEditHistoryAttribute: TauEditHistoryMessageAttribute? {
++        for attribute in self.attributes {
++            if let attribute = attribute as? TauEditHistoryMessageAttribute {
++                return attribute
++            }
++        }
++        return nil
++    }
++}
++
++func tauMergeMessageAttributes(previous: [MessageAttribute], updated: inout [MessageAttribute]) {
++    for attribute in previous {
++        if attribute is TauEditHistoryMessageAttribute {
++            if !updated.contains(where: { $0 is TauEditHistoryMessageAttribute }) {
++                updated.append(attribute)
++            }
++            return
++        }
++    }
++}
++
++private func tauCanKeepDeletedMessage(_ message: Message) -> Bool {
++    guard message.id.namespace == Namespaces.Message.Cloud else {
++        return false
++    }
++    switch message.id.peerId.namespace {
++    case Namespaces.Peer.CloudUser, Namespaces.Peer.CloudGroup, Namespaces.Peer.CloudChannel:
++        break
++    default:
++        return false
++    }
++    for media in message.media {
++        if media is TelegramMediaAction {
++            return false
++        }
++    }
++    return true
++}
++
++private func tauMarkDeleted(transaction: Transaction, message: Message, date: Int32) {
++    if message.tauDeletedAttribute != nil {
++        return
++    }
++    transaction.updateMessage(message.id, update: { currentMessage in
++        var attributes = currentMessage.attributes
++        attributes.append(TauDeletedMessageAttribute(date: date))
++        return .update(StoreMessage(updating: currentMessage, attributes: attributes, tags: currentMessage.tags))
++    })
++}
++
++func tauKeepDeletedMessages(transaction: Transaction, ids: [MessageId]) -> [MessageId] {
++    guard TauCoreSettings.shared.keepsDeletedMessages else {
++        return ids
++    }
++    let date = Int32(Date().timeIntervalSince1970)
++    var remaining: [MessageId] = []
++    for id in ids {
++        if let message = transaction.getMessage(id), tauCanKeepDeletedMessage(message) {
++            tauMarkDeleted(transaction: transaction, message: message, date: date)
++        } else {
++            remaining.append(id)
++        }
++    }
++    return remaining
++}
++
++func tauKeepDeletedMessages(transaction: Transaction, globalIds: [Int32]) -> [Int32] {
++    guard TauCoreSettings.shared.keepsDeletedMessages else {
++        return globalIds
++    }
++    let date = Int32(Date().timeIntervalSince1970)
++    var remaining: [Int32] = []
++    for globalId in globalIds {
++        if let id = transaction.messageIdsForGlobalIds([globalId]).first, let message = transaction.getMessage(id), tauCanKeepDeletedMessage(message) {
++            tauMarkDeleted(transaction: transaction, message: message, date: date)
++        } else {
++            remaining.append(globalId)
++        }
++    }
++    return remaining
++}
++
++func tauKeepsDeletedMessagesInRange(transaction: Transaction, peerId: PeerId, namespace: MessageId.Namespace, maxId: MessageId.Id) -> Bool {
++    guard TauCoreSettings.shared.keepsDeletedMessages, namespace == Namespaces.Message.Cloud else {
++        return false
++    }
++    var ids: [MessageId] = []
++    transaction.withAllMessages(peerId: peerId, namespace: namespace, { message in
++        if message.id.id <= maxId {
++            ids.append(message.id)
++        }
++        return true
++    })
++    let remaining = tauKeepDeletedMessages(transaction: transaction, ids: ids)
++    if !remaining.isEmpty {
++        transaction.deleteMessages(remaining, forEachMedia: nil)
++    }
++    return true
++}
++
++func tauKeepsMessageAgainstValidation(transaction: Transaction, id: MessageId) -> Bool {
++    guard TauCoreSettings.shared.keepsDeletedMessages else {
++        return false
++    }
++    return tauKeepDeletedMessages(transaction: transaction, ids: [id]).isEmpty
++}
++
++func tauEditHistoryAttribute(previous: Message, updated: StoreMessage) -> TauEditHistoryMessageAttribute? {
++    guard TauCoreSettings.shared.keepsEditHistory else {
++        return nil
++    }
++    let previousEntities = previous.textEntitiesAttribute?.entities ?? []
++    var updatedEntities: [MessageTextEntity] = []
++    for attribute in updated.attributes {
++        if let attribute = attribute as? TextEntitiesMessageAttribute {
++            updatedEntities = attribute.entities
++            break
++        }
++    }
++    if previous.text == updated.text && previousEntities == updatedEntities {
++        return nil
++    }
++    var date = previous.timestamp
++    for attribute in previous.attributes {
++        if let attribute = attribute as? EditedMessageAttribute {
++            date = attribute.date
++            break
++        }
++    }
++    var versions = previous.tauEditHistoryAttribute?.versions ?? []
++    versions.append(TauEditHistoryMessageAttribute.Version(text: previous.text, entities: previousEntities, date: date))
++    if versions.count > TauEditHistoryMessageAttribute.maxVersions {
++        versions.removeFirst(versions.count - TauEditHistoryMessageAttribute.maxVersions)
++    }
++    return TauEditHistoryMessageAttribute(versions: versions)
++}
 diff --git a/submodules/TelegramCore/Sources/TelegramEngine/Messages/ApplyMaxReadIndexInteractively.swift b/submodules/TelegramCore/Sources/TelegramEngine/Messages/ApplyMaxReadIndexInteractively.swift
 index 0e26cab4c2631a986deb1f9bbdbd6b056a7087b4..d0e992b60d60e4e25e1ac5946b9dc12d1bcca362 100644
 --- a/submodules/TelegramCore/Sources/TelegramEngine/Messages/ApplyMaxReadIndexInteractively.swift
@@ -396,3 +736,16 @@ index e74f20743396547ad82771f9c53b97651b29e17f..d625574c8cb3f14c50d97e7a7c1ccd52
              |> `catch` { _ -> Signal<Api.Bool, NoError> in
                  return .single(.boolFalse)
              }
+diff --git a/submodules/TelegramCore/Sources/TelegramEngine/Peers/UpdateCachedPeerData.swift b/submodules/TelegramCore/Sources/TelegramEngine/Peers/UpdateCachedPeerData.swift
+index 9e71173b22c63316d76fd0929b9a7c57a5f96bd0..9b55e41fa9be7d7ccc4b1d73f055c8f6b97c5fdd 100644
+--- a/submodules/TelegramCore/Sources/TelegramEngine/Peers/UpdateCachedPeerData.swift
++++ b/submodules/TelegramCore/Sources/TelegramEngine/Peers/UpdateCachedPeerData.swift
+@@ -968,7 +968,7 @@ func _internal_fetchAndUpdateCachedPeerData(accountPeerId: PeerId, peerId rawPee
+                                                     .withUpdatedShareTheme(channelFullData.shareTheme.flatMap(TelegramShareTheme.init(apiShareTheme:)) ?? .default)
+                                             })
+                                         
+-                                            if let minAvailableMessageId = minAvailableMessageId, minAvailableMessageIdUpdated {
++                                            if let minAvailableMessageId = minAvailableMessageId, minAvailableMessageIdUpdated, !tauKeepsDeletedMessagesInRange(transaction: transaction, peerId: peerId, namespace: minAvailableMessageId.namespace, maxId: minAvailableMessageId.id) { // Taugram
+                                                 var resourceIds: [MediaResourceId] = []
+                                                 transaction.deleteMessagesInRange(peerId: peerId, namespace: minAvailableMessageId.namespace, minId: 1, maxId: minAvailableMessageId.id, forEachMedia: { media in
+                                                     addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)

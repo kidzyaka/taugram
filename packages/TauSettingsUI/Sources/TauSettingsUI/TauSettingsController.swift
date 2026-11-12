@@ -19,7 +19,8 @@ private final class Arguments {
     let togglePeerId: () -> Void
     let toggleOLED: () -> Void
     let toggleGhost: (WritableKeyPath<TauGhostSettings, Bool>?) -> Void
-    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void) {
+    let toggleHistory: (WritableKeyPath<TauSettingsValues, Bool>) -> Void
+    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void, toggleHistory: @escaping (WritableKeyPath<TauSettingsValues, Bool>) -> Void) {
         self.toggleDangerousFeatures = toggleDangerousFeatures
         self.reviewConsent = reviewConsent
         self.selectAppIcon = selectAppIcon
@@ -28,6 +29,7 @@ private final class Arguments {
         self.togglePeerId = togglePeerId
         self.toggleOLED = toggleOLED
         self.toggleGhost = toggleGhost
+        self.toggleHistory = toggleHistory
     }
 }
 
@@ -53,6 +55,8 @@ private let _id_hide_stories = InputDataIdentifier("_id_hide_stories")
 private let _id_peer_id = InputDataIdentifier("_id_peer_id")
 private let _id_oled = InputDataIdentifier("_id_oled")
 private let _id_ghost_all = InputDataIdentifier("_id_ghost_all")
+private let _id_keep_deleted = InputDataIdentifier("_id_keep_deleted")
+private let _id_keep_edits = InputDataIdentifier("_id_keep_edits")
 private func _id_ghost(_ key: String) -> InputDataIdentifier {
     return InputDataIdentifier("_id_ghost_\(key)")
 }
@@ -201,6 +205,29 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
             //TODOLANG
             entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Sending a message still shows you online for a moment; Taugram sets you offline again within 30 seconds. Reacting to or replying to a story marks it seen. Toggle Ghost Mode quickly with ⌥⌘G."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
             index += 1
+
+            entries.append(.sectionId(sectionId, type: .normal))
+            sectionId += 1
+
+            //TODOLANG
+            entries.append(.desc(sectionId: sectionId, index: index, text: .plain("MESSAGE HISTORY"), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+            index += 1
+
+            //TODOLANG
+            entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_keep_deleted, data: .init(name: "Keep Deleted Messages", color: theme.colors.text, type: .switchable(state.values.keepDeletedMessages), viewType: .firstItem, action: {
+                arguments.toggleHistory(\.keepDeletedMessages)
+            })))
+            index += 1
+
+            //TODOLANG
+            entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_keep_edits, data: .init(name: "Keep Edit History", color: theme.colors.text, type: .switchable(state.values.keepEditHistory), viewType: .lastItem, action: {
+                arguments.toggleHistory(\.keepEditHistory)
+            })))
+            index += 1
+
+            //TODOLANG
+            entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Messages that others delete stay in the chat with a \"deleted\" mark. Earlier versions of edited messages are kept on this Mac; right-click a message to see them. Only what this Mac receives while running is saved."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+            index += 1
         }
     } else {
         //TODOLANG
@@ -282,6 +309,12 @@ public func TauSettingsController(context: any AccountContextProtocol) -> InputD
             }
         } else {
             toggleTauGhostMode()
+        }
+    }, toggleHistory: { keyPath in
+        TauSettings.shared.update { current in
+            var current = current
+            current[keyPath: keyPath] = !current[keyPath: keyPath]
+            return current
         }
     })
 

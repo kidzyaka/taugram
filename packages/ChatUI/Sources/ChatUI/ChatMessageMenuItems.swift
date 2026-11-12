@@ -1612,6 +1612,17 @@ public func chatMenuItems(for message: Message, entry: ChatHistoryEntry?, textLa
             }
             sevenBlock.append(ContextMenuItem(result, itemImage: MenuAnimation.menu_edited.value))
         }
+
+        if !isService, message.tauEditHistoryAttribute != nil { // Taugram
+            //TODOLANG
+            sevenBlock.append(ContextMenuItem("Edit History", handler: { // Taugram
+                showTauEditHistory(context: context, message: message) // Taugram
+            }, itemImage: MenuAnimation.menu_edited.value)) // Taugram
+        }
+        if let deleted = message.tauDeletedAttribute { // Taugram
+            //TODOLANG
+            sevenBlock.append(ContextMenuItem("Deleted \(stringForRelativeTimestamp(relativeTimestamp: deleted.date, relativeTo: context.timestamp))", itemImage: MenuAnimation.menu_delete.value)) // Taugram
+        }
         
         
         if message.pendingProcessingAttribute != nil {

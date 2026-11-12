@@ -2809,6 +2809,11 @@ public class ChatRowItem: TableRowItem {
                 let formatterEdited = DateSelectorUtil.chatFullDateFormatter
                 fullDate = "\(fullDate) (\(formatterEdited.string(from: Date(timeIntervalSince1970: TimeInterval(forwardInfo.date)))))"
             }
+            if let deleted = message.tauDeletedAttribute { // Taugram
+                let deletedColor = isStateOverlayLayout ? stateOverlayTextColor : (!hasBubble || isIncoming) ? theme.colors.redUI : theme.chat.grayText(isIncoming, object.renderType == .bubble) // Taugram
+                editedLabel = tauDeletedLabel(edited: editedLabel, color: deletedColor, font: renderType == .bubble ? .normal(.small) : .normal(.short)) // Taugram
+                fullDate = tauDeletedFullDate(fullDate, attribute: deleted) // Taugram
+            }
             let replyPresentation = { [self] in ChatAccessoryPresentation(background: hasBubble ? theme.chat.backgroundColor(isIncoming, object.renderType == .bubble) : isBubbled ?  theme.colors.grayForeground : theme.colors.background, colors: theme.chat.replyTitle(self), enabledText: theme.chat.replyText(self), disabledText: theme.chat.replyDisabledText(self), quoteIcon: theme.chat.replyQuote(self), pattern: theme.chat.replyPattern(self), giftEmojiFileId: theme.chat.replyGiftEmojiId(self), app: theme) }
 
             let referencesPending = context.account.viewTracker.pendingMessageReferences.hasLoadingReferences(messageId: message.id)
