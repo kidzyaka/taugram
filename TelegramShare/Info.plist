@@ -57,5 +57,9 @@
 	<string>Copyright © 2024 Telegram. All rights reserved.</string>
 	<key>SOURCE</key>
 	<string>${SOURCE}</string>
+	<key>TauApiId</key>
+	<string>${TAU_API_ID}</string>
+	<key>TauApiHash</key>
+	<string>${TAU_API_HASH}</string>
 </dict>
 </plist>
