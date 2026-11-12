@@ -13,3 +13,8 @@ private let tauChatTimeWithSeconds: DateFormatter = {
 var tauChatTimeFormatter: DateFormatter {
     return TauSettings.shared.current.showMessageSeconds ? tauChatTimeWithSeconds : DateSelectorUtil.chatDateFormatter
 }
+
+var tauShowsSelfDestructingMedia: Bool {
+    let values = TauSettings.shared.current
+    return values.dangerousFeaturesAllowed && values.showSelfDestructingOnMac
+}

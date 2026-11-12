@@ -56,6 +56,7 @@ public struct TauSettingsValues: Codable, Equatable {
     public var bypassContentProtection: Bool = false
     public var viewOnceWithoutMarking: Bool = false
     public var viewOnceInSecretChats: Bool = false
+    public var showSelfDestructingOnMac: Bool = false
     public var showMessageSeconds: Bool = false
     public var hideStoriesInChatList: Bool = false
     public var appIcon: String?
@@ -76,6 +77,7 @@ public struct TauSettingsValues: Codable, Equatable {
         self.bypassContentProtection = try container.decodeIfPresent(Bool.self, forKey: .bypassContentProtection) ?? false
         self.viewOnceWithoutMarking = try container.decodeIfPresent(Bool.self, forKey: .viewOnceWithoutMarking) ?? false
         self.viewOnceInSecretChats = try container.decodeIfPresent(Bool.self, forKey: .viewOnceInSecretChats) ?? false
+        self.showSelfDestructingOnMac = try container.decodeIfPresent(Bool.self, forKey: .showSelfDestructingOnMac) ?? false
         self.showMessageSeconds = try container.decodeIfPresent(Bool.self, forKey: .showMessageSeconds) ?? false
         self.hideStoriesInChatList = try container.decodeIfPresent(Bool.self, forKey: .hideStoriesInChatList) ?? false
         self.appIcon = try container.decodeIfPresent(String.self, forKey: .appIcon)

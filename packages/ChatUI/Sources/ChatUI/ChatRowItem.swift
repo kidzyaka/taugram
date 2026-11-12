@@ -3018,7 +3018,7 @@ public class ChatRowItem: TableRowItem {
             } else if message.media.count == 0 || message.anyMedia is TelegramMediaWebpage {
                 return ChatMessageItem(initialSize, interaction, interaction.interactionContext, entry, theme: theme)
             } else {
-                if message.id.peerId.namespace != Namespaces.Peer.SecretChat, message.autoclearTimeout != nil {
+                if message.id.peerId.namespace != Namespaces.Peer.SecretChat, message.autoclearTimeout != nil, !tauShowsSelfDestructingMedia { // Taugram
                     if let media = message.media.first, media is TelegramMediaImage || (media.isVideoFile && !media.isInstantVideo) {
                         return ChatServiceItem(initialSize, interaction,interaction.interactionContext, entry, theme: theme)
                     }

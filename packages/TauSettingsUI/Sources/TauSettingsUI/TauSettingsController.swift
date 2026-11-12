@@ -59,6 +59,7 @@ private let _id_keep_deleted = InputDataIdentifier("_id_keep_deleted")
 private let _id_keep_edits = InputDataIdentifier("_id_keep_edits")
 private let _id_bypass_protection = InputDataIdentifier("_id_bypass_protection")
 private let _id_view_once = InputDataIdentifier("_id_view_once")
+private let _id_show_self_destructing = InputDataIdentifier("_id_show_self_destructing")
 private let _id_view_once_secret = InputDataIdentifier("_id_view_once_secret")
 private func _id_ghost(_ key: String) -> InputDataIdentifier {
     return InputDataIdentifier("_id_ghost_\(key)")
@@ -246,6 +247,12 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
             index += 1
 
             //TODOLANG
+            entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_show_self_destructing, data: .init(name: "Show Self-Destructing Photos and Videos", color: theme.colors.text, type: .switchable(state.values.showSelfDestructingOnMac), viewType: .innerItem, action: {
+                arguments.toggleValue(\.showSelfDestructingOnMac)
+            })))
+            index += 1
+
+            //TODOLANG
             entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_view_once, data: .init(name: "Open Self-Destructing Media Unseen", color: theme.colors.text, type: .switchable(state.values.viewOnceWithoutMarking), viewType: state.values.viewOnceWithoutMarking ? .innerItem : .lastItem, action: {
                 arguments.toggleValue(\.viewOnceWithoutMarking)
             })))
@@ -260,7 +267,7 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
             }
 
             //TODOLANG
-            entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Copy text, select, save and drag media from chats that forbid it. Forwarding such messages sends a copy: files are downloaded and uploaded again, without a \"forwarded from\" header. Self-destructing photos, videos and voice messages open without starting their timer, so the sender is not told and they stay in the chat. Secret chats are the most private place in Telegram; keep them out unless you must."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+            entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Copy text, select, save and drag media from chats that forbid it. Forwarding such messages sends a copy: files are downloaded and uploaded again, without a \"forwarded from\" header. Telegram for Mac only says \"view it on your mobile\" for self-destructing photos and videos; Taugram can show and open them here. With \"Unseen\" on, self-destructing photos, videos and voice messages open without starting their timer, so the sender is not told and they stay in the chat. Secret chats are the most private place in Telegram; keep them out unless you must."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
             index += 1
         }
     } else {
