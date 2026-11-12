@@ -157,6 +157,8 @@ public enum PaletteWallpaper : Equatable {
     }
 }
 
+public let tauCustomPaletteName = "Taugram Custom" // Taugram
+
 public func ==(lhs: ColorPalette, rhs: ColorPalette) -> Bool {
     if lhs === rhs {
         return true
@@ -897,6 +899,7 @@ public class ColorPalette : Equatable {
                 string += "\(prop) = \(color.hexString.lowercased())\n"
             }
         }
+        string += "bubbleBackground_outgoing = \(self.bubbleBackground_outgoing.map { $0.hexString.lowercased() }.joined(separator: ","))\n" // Taugram
         string += "//Parameter only affects bubble chat mode. Available values: none, builtin, hexColor or url to cloud backgound like a t.me/bg/%slug%\n"
         string += "wallpaper = \(wallpaper.toString)\n"
         return string
@@ -1061,6 +1064,7 @@ public class ColorPalette : Equatable {
         
         let chatBackground = chatBackground.withAlphaComponent(1.0)
         
+        if name != tauCustomPaletteName { // Taugram
         if link.isTooCloseHSV(to: background) {
             link = background.brightnessAdjustedColor
         }
@@ -1106,6 +1110,8 @@ public class ColorPalette : Equatable {
         if accentIconBubble_outgoing.isTooCloseHSV(to: background_outgoing) {
             accentIconBubble_outgoing = background_outgoing.brightnessAdjustedColor
         }
+        } // Taugram
+        let tauMinAlpha: CGFloat = name == tauCustomPaletteName ? 0 : 0.6 // Taugram
         self.isNative = isNative
         self.parent = parent
         self.copyright = copyright
@@ -1113,124 +1119,124 @@ public class ColorPalette : Equatable {
         self.tinted = tinted
         self.name = name
         self.accentList = accentList
-        self._basicAccent = basicAccent.withAlphaComponent(max(0.6, basicAccent.alpha))
-        self._background = background.withAlphaComponent(max(0.6, background.alpha))
-        self._text = text.withAlphaComponent(max(0.6, text.alpha))
-        self._grayText = grayText.withAlphaComponent(max(0.6, grayText.alpha))
-        self._link = link.withAlphaComponent(max(0.6, link.alpha))
-        self._accent = accent.withAlphaComponent(max(0.6, accent.alpha))
-        self._redUI = redUI.withAlphaComponent(max(0.6, redUI.alpha))
-        self._greenUI = greenUI.withAlphaComponent(max(0.6, greenUI.alpha))
-        self._blackTransparent = blackTransparent.withAlphaComponent(max(0.6, blackTransparent.alpha))
-        self._grayTransparent = grayTransparent.withAlphaComponent(max(0.6, grayTransparent.alpha))
-        self._grayUI = grayUI.withAlphaComponent(max(0.6, grayUI.alpha))
-        self._darkGrayText = darkGrayText.withAlphaComponent(max(0.6, darkGrayText.alpha))
-        self._accentSelect = accentSelect.withAlphaComponent(max(0.6, accentSelect.alpha))
-        self._selectText = selectText.withAlphaComponent(max(0.6, selectText.alpha))
-        self._border = border.withAlphaComponent(max(0.6, border.alpha))
-        self._grayBackground = grayBackground.withAlphaComponent(max(0.6, grayBackground.alpha))
-        self._grayForeground = grayForeground.withAlphaComponent(max(0.6, grayForeground.alpha))
-        self._grayIcon = grayIcon.withAlphaComponent(max(0.6, grayIcon.alpha))
-        self._accentIcon = accentIcon.withAlphaComponent(max(0.6, accentIcon.alpha))
-        self._badgeMuted = badgeMuted.withAlphaComponent(max(0.6, badgeMuted.alpha))
-        self._badge = badge.withAlphaComponent(max(0.6, badge.alpha))
-        self._indicatorColor = indicatorColor.withAlphaComponent(max(0.6, indicatorColor.alpha))
-        self._selectMessage = selectMessage.withAlphaComponent(max(0.6, selectMessage.alpha))
+        self._basicAccent = basicAccent.withAlphaComponent(max(tauMinAlpha, basicAccent.alpha)) // Taugram
+        self._background = background.withAlphaComponent(max(tauMinAlpha, background.alpha)) // Taugram
+        self._text = text.withAlphaComponent(max(tauMinAlpha, text.alpha)) // Taugram
+        self._grayText = grayText.withAlphaComponent(max(tauMinAlpha, grayText.alpha)) // Taugram
+        self._link = link.withAlphaComponent(max(tauMinAlpha, link.alpha)) // Taugram
+        self._accent = accent.withAlphaComponent(max(tauMinAlpha, accent.alpha)) // Taugram
+        self._redUI = redUI.withAlphaComponent(max(tauMinAlpha, redUI.alpha)) // Taugram
+        self._greenUI = greenUI.withAlphaComponent(max(tauMinAlpha, greenUI.alpha)) // Taugram
+        self._blackTransparent = blackTransparent.withAlphaComponent(max(tauMinAlpha, blackTransparent.alpha)) // Taugram
+        self._grayTransparent = grayTransparent.withAlphaComponent(max(tauMinAlpha, grayTransparent.alpha)) // Taugram
+        self._grayUI = grayUI.withAlphaComponent(max(tauMinAlpha, grayUI.alpha)) // Taugram
+        self._darkGrayText = darkGrayText.withAlphaComponent(max(tauMinAlpha, darkGrayText.alpha)) // Taugram
+        self._accentSelect = accentSelect.withAlphaComponent(max(tauMinAlpha, accentSelect.alpha)) // Taugram
+        self._selectText = selectText.withAlphaComponent(max(tauMinAlpha, selectText.alpha)) // Taugram
+        self._border = border.withAlphaComponent(max(tauMinAlpha, border.alpha)) // Taugram
+        self._grayBackground = grayBackground.withAlphaComponent(max(tauMinAlpha, grayBackground.alpha)) // Taugram
+        self._grayForeground = grayForeground.withAlphaComponent(max(tauMinAlpha, grayForeground.alpha)) // Taugram
+        self._grayIcon = grayIcon.withAlphaComponent(max(tauMinAlpha, grayIcon.alpha)) // Taugram
+        self._accentIcon = accentIcon.withAlphaComponent(max(tauMinAlpha, accentIcon.alpha)) // Taugram
+        self._badgeMuted = badgeMuted.withAlphaComponent(max(tauMinAlpha, badgeMuted.alpha)) // Taugram
+        self._badge = badge.withAlphaComponent(max(tauMinAlpha, badge.alpha)) // Taugram
+        self._indicatorColor = indicatorColor.withAlphaComponent(max(tauMinAlpha, indicatorColor.alpha)) // Taugram
+        self._selectMessage = selectMessage.withAlphaComponent(max(tauMinAlpha, selectMessage.alpha)) // Taugram
         
-        self._monospacedPre = monospacedPre.withAlphaComponent(max(0.6, monospacedPre.alpha))
-        self._monospacedCode = monospacedCode.withAlphaComponent(max(0.6, monospacedCode.alpha))
-        self._monospacedPreBubble_incoming = monospacedPreBubble_incoming.withAlphaComponent(max(0.6, monospacedPreBubble_incoming.alpha))
-        self._monospacedPreBubble_outgoing = monospacedPreBubble_outgoing.withAlphaComponent(max(0.6, monospacedPreBubble_outgoing.alpha))
-        self._monospacedCodeBubble_incoming = monospacedCodeBubble_incoming.withAlphaComponent(max(0.6, monospacedCodeBubble_incoming.alpha))
-        self._monospacedCodeBubble_outgoing = monospacedCodeBubble_outgoing.withAlphaComponent(max(0.6, monospacedCodeBubble_outgoing.alpha))
-        self._selectTextBubble_incoming = selectTextBubble_incoming.withAlphaComponent(max(0.6, selectTextBubble_incoming.alpha))
-        self._selectTextBubble_outgoing = selectTextBubble_outgoing.withAlphaComponent(max(0.6, selectTextBubble_outgoing.alpha))
-        self._bubbleBackground_incoming = bubbleBackground_incoming.withAlphaComponent(max(0.6, bubbleBackground_incoming.alpha))
+        self._monospacedPre = monospacedPre.withAlphaComponent(max(tauMinAlpha, monospacedPre.alpha)) // Taugram
+        self._monospacedCode = monospacedCode.withAlphaComponent(max(tauMinAlpha, monospacedCode.alpha)) // Taugram
+        self._monospacedPreBubble_incoming = monospacedPreBubble_incoming.withAlphaComponent(max(tauMinAlpha, monospacedPreBubble_incoming.alpha)) // Taugram
+        self._monospacedPreBubble_outgoing = monospacedPreBubble_outgoing.withAlphaComponent(max(tauMinAlpha, monospacedPreBubble_outgoing.alpha)) // Taugram
+        self._monospacedCodeBubble_incoming = monospacedCodeBubble_incoming.withAlphaComponent(max(tauMinAlpha, monospacedCodeBubble_incoming.alpha)) // Taugram
+        self._monospacedCodeBubble_outgoing = monospacedCodeBubble_outgoing.withAlphaComponent(max(tauMinAlpha, monospacedCodeBubble_outgoing.alpha)) // Taugram
+        self._selectTextBubble_incoming = selectTextBubble_incoming.withAlphaComponent(max(tauMinAlpha, selectTextBubble_incoming.alpha)) // Taugram
+        self._selectTextBubble_outgoing = selectTextBubble_outgoing.withAlphaComponent(max(tauMinAlpha, selectTextBubble_outgoing.alpha)) // Taugram
+        self._bubbleBackground_incoming = bubbleBackground_incoming.withAlphaComponent(max(tauMinAlpha, bubbleBackground_incoming.alpha)) // Taugram
         self._bubbleBackground_outgoing = bubbleBackground_outgoing
-        self._bubbleBorder_incoming = bubbleBorder_incoming.withAlphaComponent(max(0.6, bubbleBorder_incoming.alpha))
-        self._bubbleBorder_outgoing = bubbleBorder_outgoing.withAlphaComponent(max(0.6, bubbleBorder_outgoing.alpha))
-        self._grayTextBubble_incoming = grayTextBubble_incoming.withAlphaComponent(max(0.6, grayTextBubble_incoming.alpha))
-        self._grayTextBubble_outgoing = grayTextBubble_outgoing.withAlphaComponent(max(0.6, grayTextBubble_outgoing.alpha))
-        self._grayIconBubble_incoming = grayIconBubble_incoming.withAlphaComponent(max(0.6, grayIconBubble_incoming.alpha))
-        self._grayIconBubble_outgoing = grayIconBubble_outgoing.withAlphaComponent(max(0.6, grayIconBubble_outgoing.alpha))
-        self._accentIconBubble_incoming = accentIconBubble_incoming.withAlphaComponent(max(0.6, accentIconBubble_incoming.alpha))
-        self._accentIconBubble_outgoing = accentIconBubble_outgoing.withAlphaComponent(max(0.6, accentIconBubble_outgoing.alpha))
-        self._linkBubble_incoming = linkBubble_incoming.withAlphaComponent(max(0.6, linkBubble_incoming.alpha))
-        self._linkBubble_outgoing = linkBubble_outgoing.withAlphaComponent(max(0.6, linkBubble_outgoing.alpha))
-        self._textBubble_incoming = textBubble_incoming.withAlphaComponent(max(0.6, textBubble_incoming.alpha))
-        self._textBubble_outgoing = textBubble_outgoing.withAlphaComponent(max(0.6, textBubble_outgoing.alpha))
-        self._selectMessageBubble = selectMessageBubble.withAlphaComponent(max(0.6, selectMessageBubble.alpha))
-        self._fileActivityBackground = fileActivityBackground.withAlphaComponent(max(0.6, fileActivityBackground.alpha))
-        self._fileActivityForeground = fileActivityForeground.withAlphaComponent(max(0.6, fileActivityForeground.alpha))
-        self._fileActivityBackgroundBubble_incoming = fileActivityBackgroundBubble_incoming.withAlphaComponent(max(0.6, fileActivityBackgroundBubble_incoming.alpha))
-        self._fileActivityBackgroundBubble_outgoing = fileActivityBackgroundBubble_outgoing.withAlphaComponent(max(0.6, fileActivityBackgroundBubble_outgoing.alpha))
-        self._fileActivityForegroundBubble_incoming = fileActivityForegroundBubble_incoming.withAlphaComponent(max(0.6, fileActivityForegroundBubble_incoming.alpha))
-        self._fileActivityForegroundBubble_outgoing = fileActivityForegroundBubble_outgoing.withAlphaComponent(max(0.6, fileActivityForegroundBubble_outgoing.alpha))
-        self._waveformBackground = waveformBackground.withAlphaComponent(max(0.6, waveformBackground.alpha))
-        self._waveformForeground = waveformForeground.withAlphaComponent(max(0.6, waveformForeground.alpha))
-        self._waveformBackgroundBubble_incoming = waveformBackgroundBubble_incoming.withAlphaComponent(max(0.6, waveformBackgroundBubble_incoming.alpha))
-        self._waveformBackgroundBubble_outgoing = waveformBackgroundBubble_outgoing.withAlphaComponent(max(0.6, waveformBackgroundBubble_outgoing.alpha))
-        self._waveformForegroundBubble_incoming = waveformForegroundBubble_incoming.withAlphaComponent(max(0.6, waveformForegroundBubble_incoming.alpha))
-        self._waveformForegroundBubble_outgoing = waveformForegroundBubble_outgoing.withAlphaComponent(max(0.6, waveformForegroundBubble_outgoing.alpha))
-        self._webPreviewActivity = webPreviewActivity.withAlphaComponent(max(0.6, webPreviewActivity.alpha))
-        self._webPreviewActivityBubble_incoming = webPreviewActivityBubble_incoming.withAlphaComponent(max(0.6, webPreviewActivityBubble_incoming.alpha))
-        self._webPreviewActivityBubble_outgoing = webPreviewActivityBubble_outgoing.withAlphaComponent(max(0.6, webPreviewActivityBubble_outgoing.alpha))
-        self._redBubble_incoming = redBubble_incoming.withAlphaComponent(max(0.6, redBubble_incoming.alpha))
-        self._redBubble_outgoing = redBubble_outgoing.withAlphaComponent(max(0.6, redBubble_outgoing.alpha))
-        self._greenBubble_incoming = greenBubble_incoming.withAlphaComponent(max(0.6, greenBubble_incoming.alpha))
-        self._greenBubble_outgoing = greenBubble_outgoing.withAlphaComponent(max(0.6, greenBubble_outgoing.alpha))
-        self._chatReplyTitle = chatReplyTitle.withAlphaComponent(max(0.6, chatReplyTitle.alpha))
-        self._chatReplyTextEnabled = chatReplyTextEnabled.withAlphaComponent(max(0.6, chatReplyTextEnabled.alpha))
-        self._chatReplyTextDisabled = chatReplyTextDisabled.withAlphaComponent(max(0.6, chatReplyTextDisabled.alpha))
-        self._chatReplyTitleBubble_incoming = chatReplyTitleBubble_incoming.withAlphaComponent(max(0.6, chatReplyTitleBubble_incoming.alpha))
-        self._chatReplyTitleBubble_outgoing = chatReplyTitleBubble_outgoing.withAlphaComponent(max(0.6, chatReplyTitleBubble_outgoing.alpha))
-        self._chatReplyTextEnabledBubble_incoming = chatReplyTextEnabledBubble_incoming.withAlphaComponent(max(0.6, chatReplyTextEnabledBubble_incoming.alpha))
-        self._chatReplyTextEnabledBubble_outgoing = chatReplyTextEnabledBubble_outgoing.withAlphaComponent(max(0.6, chatReplyTextEnabledBubble_outgoing.alpha))
-        self._chatReplyTextDisabledBubble_incoming = chatReplyTextDisabledBubble_incoming.withAlphaComponent(max(0.6, chatReplyTextDisabledBubble_incoming.alpha))
-        self._chatReplyTextDisabledBubble_outgoing = chatReplyTextDisabledBubble_outgoing.withAlphaComponent(max(0.6, chatReplyTextDisabledBubble_outgoing.alpha))
-        self._groupPeerNameRed = groupPeerNameRed.withAlphaComponent(max(0.6, groupPeerNameRed.alpha))
-        self._groupPeerNameOrange = groupPeerNameOrange.withAlphaComponent(max(0.6, groupPeerNameOrange.alpha))
-        self._groupPeerNameViolet = groupPeerNameViolet.withAlphaComponent(max(0.6, groupPeerNameViolet.alpha))
-        self._groupPeerNameGreen = groupPeerNameGreen.withAlphaComponent(max(0.6, groupPeerNameGreen.alpha))
-        self._groupPeerNameCyan = groupPeerNameCyan.withAlphaComponent(max(0.6, groupPeerNameCyan.alpha))
-        self._groupPeerNameLightBlue = groupPeerNameLightBlue.withAlphaComponent(max(0.6, groupPeerNameLightBlue.alpha))
-        self._groupPeerNameBlue = groupPeerNameBlue.withAlphaComponent(max(0.6, groupPeerNameBlue.alpha))
+        self._bubbleBorder_incoming = bubbleBorder_incoming.withAlphaComponent(max(tauMinAlpha, bubbleBorder_incoming.alpha)) // Taugram
+        self._bubbleBorder_outgoing = bubbleBorder_outgoing.withAlphaComponent(max(tauMinAlpha, bubbleBorder_outgoing.alpha)) // Taugram
+        self._grayTextBubble_incoming = grayTextBubble_incoming.withAlphaComponent(max(tauMinAlpha, grayTextBubble_incoming.alpha)) // Taugram
+        self._grayTextBubble_outgoing = grayTextBubble_outgoing.withAlphaComponent(max(tauMinAlpha, grayTextBubble_outgoing.alpha)) // Taugram
+        self._grayIconBubble_incoming = grayIconBubble_incoming.withAlphaComponent(max(tauMinAlpha, grayIconBubble_incoming.alpha)) // Taugram
+        self._grayIconBubble_outgoing = grayIconBubble_outgoing.withAlphaComponent(max(tauMinAlpha, grayIconBubble_outgoing.alpha)) // Taugram
+        self._accentIconBubble_incoming = accentIconBubble_incoming.withAlphaComponent(max(tauMinAlpha, accentIconBubble_incoming.alpha)) // Taugram
+        self._accentIconBubble_outgoing = accentIconBubble_outgoing.withAlphaComponent(max(tauMinAlpha, accentIconBubble_outgoing.alpha)) // Taugram
+        self._linkBubble_incoming = linkBubble_incoming.withAlphaComponent(max(tauMinAlpha, linkBubble_incoming.alpha)) // Taugram
+        self._linkBubble_outgoing = linkBubble_outgoing.withAlphaComponent(max(tauMinAlpha, linkBubble_outgoing.alpha)) // Taugram
+        self._textBubble_incoming = textBubble_incoming.withAlphaComponent(max(tauMinAlpha, textBubble_incoming.alpha)) // Taugram
+        self._textBubble_outgoing = textBubble_outgoing.withAlphaComponent(max(tauMinAlpha, textBubble_outgoing.alpha)) // Taugram
+        self._selectMessageBubble = selectMessageBubble.withAlphaComponent(max(tauMinAlpha, selectMessageBubble.alpha)) // Taugram
+        self._fileActivityBackground = fileActivityBackground.withAlphaComponent(max(tauMinAlpha, fileActivityBackground.alpha)) // Taugram
+        self._fileActivityForeground = fileActivityForeground.withAlphaComponent(max(tauMinAlpha, fileActivityForeground.alpha)) // Taugram
+        self._fileActivityBackgroundBubble_incoming = fileActivityBackgroundBubble_incoming.withAlphaComponent(max(tauMinAlpha, fileActivityBackgroundBubble_incoming.alpha)) // Taugram
+        self._fileActivityBackgroundBubble_outgoing = fileActivityBackgroundBubble_outgoing.withAlphaComponent(max(tauMinAlpha, fileActivityBackgroundBubble_outgoing.alpha)) // Taugram
+        self._fileActivityForegroundBubble_incoming = fileActivityForegroundBubble_incoming.withAlphaComponent(max(tauMinAlpha, fileActivityForegroundBubble_incoming.alpha)) // Taugram
+        self._fileActivityForegroundBubble_outgoing = fileActivityForegroundBubble_outgoing.withAlphaComponent(max(tauMinAlpha, fileActivityForegroundBubble_outgoing.alpha)) // Taugram
+        self._waveformBackground = waveformBackground.withAlphaComponent(max(tauMinAlpha, waveformBackground.alpha)) // Taugram
+        self._waveformForeground = waveformForeground.withAlphaComponent(max(tauMinAlpha, waveformForeground.alpha)) // Taugram
+        self._waveformBackgroundBubble_incoming = waveformBackgroundBubble_incoming.withAlphaComponent(max(tauMinAlpha, waveformBackgroundBubble_incoming.alpha)) // Taugram
+        self._waveformBackgroundBubble_outgoing = waveformBackgroundBubble_outgoing.withAlphaComponent(max(tauMinAlpha, waveformBackgroundBubble_outgoing.alpha)) // Taugram
+        self._waveformForegroundBubble_incoming = waveformForegroundBubble_incoming.withAlphaComponent(max(tauMinAlpha, waveformForegroundBubble_incoming.alpha)) // Taugram
+        self._waveformForegroundBubble_outgoing = waveformForegroundBubble_outgoing.withAlphaComponent(max(tauMinAlpha, waveformForegroundBubble_outgoing.alpha)) // Taugram
+        self._webPreviewActivity = webPreviewActivity.withAlphaComponent(max(tauMinAlpha, webPreviewActivity.alpha)) // Taugram
+        self._webPreviewActivityBubble_incoming = webPreviewActivityBubble_incoming.withAlphaComponent(max(tauMinAlpha, webPreviewActivityBubble_incoming.alpha)) // Taugram
+        self._webPreviewActivityBubble_outgoing = webPreviewActivityBubble_outgoing.withAlphaComponent(max(tauMinAlpha, webPreviewActivityBubble_outgoing.alpha)) // Taugram
+        self._redBubble_incoming = redBubble_incoming.withAlphaComponent(max(tauMinAlpha, redBubble_incoming.alpha)) // Taugram
+        self._redBubble_outgoing = redBubble_outgoing.withAlphaComponent(max(tauMinAlpha, redBubble_outgoing.alpha)) // Taugram
+        self._greenBubble_incoming = greenBubble_incoming.withAlphaComponent(max(tauMinAlpha, greenBubble_incoming.alpha)) // Taugram
+        self._greenBubble_outgoing = greenBubble_outgoing.withAlphaComponent(max(tauMinAlpha, greenBubble_outgoing.alpha)) // Taugram
+        self._chatReplyTitle = chatReplyTitle.withAlphaComponent(max(tauMinAlpha, chatReplyTitle.alpha)) // Taugram
+        self._chatReplyTextEnabled = chatReplyTextEnabled.withAlphaComponent(max(tauMinAlpha, chatReplyTextEnabled.alpha)) // Taugram
+        self._chatReplyTextDisabled = chatReplyTextDisabled.withAlphaComponent(max(tauMinAlpha, chatReplyTextDisabled.alpha)) // Taugram
+        self._chatReplyTitleBubble_incoming = chatReplyTitleBubble_incoming.withAlphaComponent(max(tauMinAlpha, chatReplyTitleBubble_incoming.alpha)) // Taugram
+        self._chatReplyTitleBubble_outgoing = chatReplyTitleBubble_outgoing.withAlphaComponent(max(tauMinAlpha, chatReplyTitleBubble_outgoing.alpha)) // Taugram
+        self._chatReplyTextEnabledBubble_incoming = chatReplyTextEnabledBubble_incoming.withAlphaComponent(max(tauMinAlpha, chatReplyTextEnabledBubble_incoming.alpha)) // Taugram
+        self._chatReplyTextEnabledBubble_outgoing = chatReplyTextEnabledBubble_outgoing.withAlphaComponent(max(tauMinAlpha, chatReplyTextEnabledBubble_outgoing.alpha)) // Taugram
+        self._chatReplyTextDisabledBubble_incoming = chatReplyTextDisabledBubble_incoming.withAlphaComponent(max(tauMinAlpha, chatReplyTextDisabledBubble_incoming.alpha)) // Taugram
+        self._chatReplyTextDisabledBubble_outgoing = chatReplyTextDisabledBubble_outgoing.withAlphaComponent(max(tauMinAlpha, chatReplyTextDisabledBubble_outgoing.alpha)) // Taugram
+        self._groupPeerNameRed = groupPeerNameRed.withAlphaComponent(max(tauMinAlpha, groupPeerNameRed.alpha)) // Taugram
+        self._groupPeerNameOrange = groupPeerNameOrange.withAlphaComponent(max(tauMinAlpha, groupPeerNameOrange.alpha)) // Taugram
+        self._groupPeerNameViolet = groupPeerNameViolet.withAlphaComponent(max(tauMinAlpha, groupPeerNameViolet.alpha)) // Taugram
+        self._groupPeerNameGreen = groupPeerNameGreen.withAlphaComponent(max(tauMinAlpha, groupPeerNameGreen.alpha)) // Taugram
+        self._groupPeerNameCyan = groupPeerNameCyan.withAlphaComponent(max(tauMinAlpha, groupPeerNameCyan.alpha)) // Taugram
+        self._groupPeerNameLightBlue = groupPeerNameLightBlue.withAlphaComponent(max(tauMinAlpha, groupPeerNameLightBlue.alpha)) // Taugram
+        self._groupPeerNameBlue = groupPeerNameBlue.withAlphaComponent(max(tauMinAlpha, groupPeerNameBlue.alpha)) // Taugram
         
-        self._peerAvatarRedTop =  peerAvatarRedTop.withAlphaComponent(max(0.6, peerAvatarRedTop.alpha))
-        self._peerAvatarRedBottom = peerAvatarRedBottom.withAlphaComponent(max(0.6, peerAvatarRedBottom.alpha))
-        self._peerAvatarOrangeTop = peerAvatarOrangeTop.withAlphaComponent(max(0.6, peerAvatarOrangeTop.alpha))
-        self._peerAvatarOrangeBottom = peerAvatarOrangeBottom.withAlphaComponent(max(0.6, peerAvatarOrangeBottom.alpha))
-        self._peerAvatarVioletTop = peerAvatarVioletTop.withAlphaComponent(max(0.6, peerAvatarVioletTop.alpha))
-        self._peerAvatarVioletBottom = peerAvatarVioletBottom.withAlphaComponent(max(0.6, peerAvatarVioletBottom.alpha))
-        self._peerAvatarGreenTop = peerAvatarGreenTop.withAlphaComponent(max(0.6, peerAvatarGreenTop.alpha))
-        self._peerAvatarGreenBottom = peerAvatarGreenBottom.withAlphaComponent(max(0.6, peerAvatarGreenBottom.alpha))
-        self._peerAvatarCyanTop = peerAvatarCyanTop.withAlphaComponent(max(0.6, peerAvatarCyanTop.alpha))
-        self._peerAvatarCyanBottom = peerAvatarCyanBottom.withAlphaComponent(max(0.6, peerAvatarCyanBottom.alpha))
-        self._peerAvatarBlueTop = peerAvatarBlueTop.withAlphaComponent(max(0.6, peerAvatarBlueTop.alpha))
-        self._peerAvatarBlueBottom = peerAvatarBlueBottom.withAlphaComponent(max(0.6, peerAvatarBlueBottom.alpha))
-        self._peerAvatarPinkTop = peerAvatarPinkTop.withAlphaComponent(max(0.6, peerAvatarPinkTop.alpha))
-        self._peerAvatarPinkBottom = peerAvatarPinkBottom.withAlphaComponent(max(0.6, peerAvatarPinkBottom.alpha))
-        self._bubbleBackgroundHighlight_incoming = bubbleBackgroundHighlight_incoming.withAlphaComponent(max(0.6, bubbleBackgroundHighlight_incoming.alpha))
-        self._bubbleBackgroundHighlight_outgoing = bubbleBackgroundHighlight_outgoing.withAlphaComponent(max(0.6, bubbleBackgroundHighlight_outgoing.alpha))
-        self._chatDateActive = chatDateActive.withAlphaComponent(max(0.6, chatDateActive.alpha))
-        self._chatDateText = chatDateText.withAlphaComponent(max(0.6, chatDateText.alpha))
+        self._peerAvatarRedTop =  peerAvatarRedTop.withAlphaComponent(max(tauMinAlpha, peerAvatarRedTop.alpha)) // Taugram
+        self._peerAvatarRedBottom = peerAvatarRedBottom.withAlphaComponent(max(tauMinAlpha, peerAvatarRedBottom.alpha)) // Taugram
+        self._peerAvatarOrangeTop = peerAvatarOrangeTop.withAlphaComponent(max(tauMinAlpha, peerAvatarOrangeTop.alpha)) // Taugram
+        self._peerAvatarOrangeBottom = peerAvatarOrangeBottom.withAlphaComponent(max(tauMinAlpha, peerAvatarOrangeBottom.alpha)) // Taugram
+        self._peerAvatarVioletTop = peerAvatarVioletTop.withAlphaComponent(max(tauMinAlpha, peerAvatarVioletTop.alpha)) // Taugram
+        self._peerAvatarVioletBottom = peerAvatarVioletBottom.withAlphaComponent(max(tauMinAlpha, peerAvatarVioletBottom.alpha)) // Taugram
+        self._peerAvatarGreenTop = peerAvatarGreenTop.withAlphaComponent(max(tauMinAlpha, peerAvatarGreenTop.alpha)) // Taugram
+        self._peerAvatarGreenBottom = peerAvatarGreenBottom.withAlphaComponent(max(tauMinAlpha, peerAvatarGreenBottom.alpha)) // Taugram
+        self._peerAvatarCyanTop = peerAvatarCyanTop.withAlphaComponent(max(tauMinAlpha, peerAvatarCyanTop.alpha)) // Taugram
+        self._peerAvatarCyanBottom = peerAvatarCyanBottom.withAlphaComponent(max(tauMinAlpha, peerAvatarCyanBottom.alpha)) // Taugram
+        self._peerAvatarBlueTop = peerAvatarBlueTop.withAlphaComponent(max(tauMinAlpha, peerAvatarBlueTop.alpha)) // Taugram
+        self._peerAvatarBlueBottom = peerAvatarBlueBottom.withAlphaComponent(max(tauMinAlpha, peerAvatarBlueBottom.alpha)) // Taugram
+        self._peerAvatarPinkTop = peerAvatarPinkTop.withAlphaComponent(max(tauMinAlpha, peerAvatarPinkTop.alpha)) // Taugram
+        self._peerAvatarPinkBottom = peerAvatarPinkBottom.withAlphaComponent(max(tauMinAlpha, peerAvatarPinkBottom.alpha)) // Taugram
+        self._bubbleBackgroundHighlight_incoming = bubbleBackgroundHighlight_incoming.withAlphaComponent(max(tauMinAlpha, bubbleBackgroundHighlight_incoming.alpha)) // Taugram
+        self._bubbleBackgroundHighlight_outgoing = bubbleBackgroundHighlight_outgoing.withAlphaComponent(max(tauMinAlpha, bubbleBackgroundHighlight_outgoing.alpha)) // Taugram
+        self._chatDateActive = chatDateActive.withAlphaComponent(max(tauMinAlpha, chatDateActive.alpha)) // Taugram
+        self._chatDateText = chatDateText.withAlphaComponent(max(tauMinAlpha, chatDateText.alpha)) // Taugram
         
-        self._revealAction_neutral1_background = revealAction_neutral1_background.withAlphaComponent(max(0.6, revealAction_neutral1_background.alpha))
-        self._revealAction_neutral1_foreground = revealAction_neutral1_foreground.withAlphaComponent(max(0.6, revealAction_neutral1_foreground.alpha))
-        self._revealAction_neutral2_background = revealAction_neutral2_background.withAlphaComponent(max(0.6, revealAction_neutral2_background.alpha))
-        self._revealAction_neutral2_foreground = revealAction_neutral2_foreground.withAlphaComponent(max(0.6, revealAction_neutral2_foreground.alpha))
-        self._revealAction_destructive_background = revealAction_destructive_background.withAlphaComponent(max(0.6, revealAction_destructive_background.alpha))
-        self._revealAction_destructive_foreground = revealAction_destructive_foreground.withAlphaComponent(max(0.6, revealAction_destructive_foreground.alpha))
-        self._revealAction_constructive_background = revealAction_constructive_background.withAlphaComponent(max(0.6, revealAction_constructive_background.alpha))
-        self._revealAction_constructive_foreground = revealAction_constructive_foreground.withAlphaComponent(max(0.6, revealAction_constructive_foreground.alpha))
-        self._revealAction_accent_background = revealAction_accent_background.withAlphaComponent(max(0.6, revealAction_accent_background.alpha))
-        self._revealAction_accent_foreground = revealAction_accent_foreground.withAlphaComponent(max(0.6, revealAction_accent_foreground.alpha))
-        self._revealAction_warning_background = revealAction_warning_background.withAlphaComponent(max(0.6, revealAction_warning_background.alpha))
-        self._revealAction_warning_foreground = revealAction_warning_foreground.withAlphaComponent(max(0.6, revealAction_warning_foreground.alpha))
-        self._revealAction_inactive_background = revealAction_inactive_background.withAlphaComponent(max(0.6, revealAction_inactive_background.alpha))
-        self._revealAction_inactive_foreground = revealAction_inactive_foreground.withAlphaComponent(max(0.6, revealAction_inactive_foreground.alpha))
+        self._revealAction_neutral1_background = revealAction_neutral1_background.withAlphaComponent(max(tauMinAlpha, revealAction_neutral1_background.alpha)) // Taugram
+        self._revealAction_neutral1_foreground = revealAction_neutral1_foreground.withAlphaComponent(max(tauMinAlpha, revealAction_neutral1_foreground.alpha)) // Taugram
+        self._revealAction_neutral2_background = revealAction_neutral2_background.withAlphaComponent(max(tauMinAlpha, revealAction_neutral2_background.alpha)) // Taugram
+        self._revealAction_neutral2_foreground = revealAction_neutral2_foreground.withAlphaComponent(max(tauMinAlpha, revealAction_neutral2_foreground.alpha)) // Taugram
+        self._revealAction_destructive_background = revealAction_destructive_background.withAlphaComponent(max(tauMinAlpha, revealAction_destructive_background.alpha)) // Taugram
+        self._revealAction_destructive_foreground = revealAction_destructive_foreground.withAlphaComponent(max(tauMinAlpha, revealAction_destructive_foreground.alpha)) // Taugram
+        self._revealAction_constructive_background = revealAction_constructive_background.withAlphaComponent(max(tauMinAlpha, revealAction_constructive_background.alpha)) // Taugram
+        self._revealAction_constructive_foreground = revealAction_constructive_foreground.withAlphaComponent(max(tauMinAlpha, revealAction_constructive_foreground.alpha)) // Taugram
+        self._revealAction_accent_background = revealAction_accent_background.withAlphaComponent(max(tauMinAlpha, revealAction_accent_background.alpha)) // Taugram
+        self._revealAction_accent_foreground = revealAction_accent_foreground.withAlphaComponent(max(tauMinAlpha, revealAction_accent_foreground.alpha)) // Taugram
+        self._revealAction_warning_background = revealAction_warning_background.withAlphaComponent(max(tauMinAlpha, revealAction_warning_background.alpha)) // Taugram
+        self._revealAction_warning_foreground = revealAction_warning_foreground.withAlphaComponent(max(tauMinAlpha, revealAction_warning_foreground.alpha)) // Taugram
+        self._revealAction_inactive_background = revealAction_inactive_background.withAlphaComponent(max(tauMinAlpha, revealAction_inactive_background.alpha)) // Taugram
+        self._revealAction_inactive_foreground = revealAction_inactive_foreground.withAlphaComponent(max(tauMinAlpha, revealAction_inactive_foreground.alpha)) // Taugram
         
-        self._chatBackground = chatBackground.withAlphaComponent(max(0.6, chatBackground.alpha))
+        self._chatBackground = chatBackground.withAlphaComponent(max(tauMinAlpha, chatBackground.alpha)) // Taugram
         self.wallpaper = wallpaper
         self._listBackground = listBackground
         self._listGrayText = listGrayText
