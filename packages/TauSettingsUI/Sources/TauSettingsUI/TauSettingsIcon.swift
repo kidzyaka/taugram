@@ -10,12 +10,11 @@ public func generateTauSettingsIcon() -> CGImage {
         ctx.clip()
         let colors = [NSColor(srgbRed: 0.561, green: 0.400, blue: 0.941, alpha: 1).cgColor, NSColor(srgbRed: 0.369, green: 0.208, blue: 0.804, alpha: 1).cgColor] as CFArray
         if let gradient = CGGradient(colorsSpace: CGColorSpace(name: CGColorSpace.sRGB), colors: colors, locations: [0, 1]) {
-            ctx.drawLinearGradient(gradient, start: CGPoint(x: 0, y: size.height), end: CGPoint(x: 0, y: 0), options: [])
+            ctx.drawLinearGradient(gradient, start: CGPoint(x: 0, y: 0), end: CGPoint(x: 0, y: size.height), options: [])
         }
         ctx.resetClip()
         let scale = size.width / 1024
-        ctx.translateBy(x: 0, y: size.height)
-        ctx.scaleBy(x: scale, y: -scale)
+        ctx.scaleBy(x: scale, y: scale)
         ctx.setStrokeColor(NSColor.white.cgColor)
         ctx.setLineWidth(96)
         ctx.setLineCap(.round)

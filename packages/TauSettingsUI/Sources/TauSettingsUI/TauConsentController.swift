@@ -32,6 +32,7 @@ private final class TauConsentView: View {
             button.set(color: .white, for: .Normal)
             button.layer?.cornerRadius = 10
             button.autohighlight = false
+            button.autoSizeToFit = false
             button.scaleOnClick = true
         }
         disableButton.set(background: theme.colors.accent, for: .Normal)
