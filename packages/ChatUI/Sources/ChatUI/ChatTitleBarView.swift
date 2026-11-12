@@ -71,7 +71,7 @@ class ChatTitleBarView: TitledBarView, InteractionContentViewProtocol {
     private var leftStatusControl: PremiumStatusControl?
     private var tauRole: TauContributorRole? // Taugram
     private var tauIconView: ImageView? // Taugram
-    private var tauNameLayer: TauNameGradientLayer? // Taugram
+    private var tauNameLayer: TauNameGradientView? // Taugram
     private var tauShimmered = false // Taugram
     private var tauTitle: NSAttributedString? // Taugram
 
@@ -886,8 +886,8 @@ extension ChatTitleBarView {
     }
 
     fileprivate func layoutTauName() {
-        guard let role = self.tauRole, let title = self.tauTitle, let titleRect = self.titleRect, let hostLayer = self.layer else {
-            self.tauNameLayer?.removeFromSuperlayer()
+        guard let role = self.tauRole, let title = self.tauTitle, let titleRect = self.titleRect else {
+            self.tauNameLayer?.removeFromSuperview()
             self.tauNameLayer = nil
             return
         }
@@ -896,10 +896,10 @@ extension ChatTitleBarView {
         }
         let layout = TextViewLayout(title, maximumNumberOfLines: 1, truncationType: .end)
         layout.measure(width: titleRect.width + 1)
-        let layer = self.tauNameLayer ?? TauNameGradientLayer()
+        let layer = self.tauNameLayer ?? TauNameGradientView(frame: .zero)
         self.tauNameLayer = layer
-        if layer.superlayer !== hostLayer || hostLayer.sublayers?.last !== layer {
-            hostLayer.addSublayer(layer)
+        if layer.superview !== self || self.subviews.last !== layer {
+            self.addSubview(layer)
         }
         let origin = NSMakePoint(titleRect.minX, floor(titleRect.midY - layout.layoutSize.height / 2))
         layer.update(layout: layout, role: role, dark: theme.colors.isDark, origin: origin, scale: backingScaleFactor)

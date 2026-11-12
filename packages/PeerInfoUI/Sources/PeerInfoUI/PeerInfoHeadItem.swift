@@ -473,6 +473,9 @@ class PeerInfoHeadItem<Context: AccountContextProtocol>: GeneralRowItem {
             if walletBalance != nil {
                 height += PeerInfoBalanceView.spacing + PeerInfoBalanceView.height
             }
+            if tauRole != nil { // Taugram
+                height += TauRolePillView.spacing + TauRolePillView.height // Taugram
+            } // Taugram
             if !items.isEmpty {
                 let maxActionSize: NSSize = items.max(by: { $0.size.height < $1.size.height })!.size
                 height += maxActionSize.height + insets.top
@@ -769,6 +772,10 @@ class PeerInfoHeadItem<Context: AccountContextProtocol>: GeneralRowItem {
         }
         return max(height, collapsedHeight - expandedAvatarInsets)
     }
+
+    fileprivate var tauRole: TauContributorRole? { // Taugram
+        return threadId == nil ? TauContributors.role(peer?.id) : nil // Taugram
+    } // Taugram
 
     fileprivate var effectiveNameLayout: TextViewLayout {
         return isAvatarExpanded ? overlayTextLayout(nameLayout, color: .white) : nameLayout
@@ -1160,7 +1167,7 @@ private final class ExpandedAvatarShadeView: View {
 
 private final class NameContainer : View {
     let nameView = TextView()
-    private var tauNameLayer: TauNameGradientLayer? // Taugram
+    private var tauNameLayer: TauNameGradientView? // Taugram
     private var tauRole: TauContributorRole? // Taugram
     private var tauShimmered = false // Taugram
     var statusControl: PremiumStatusControl?
@@ -1742,6 +1749,7 @@ private final class PeerInfoHeadView<Context: AccountContextProtocol> : GeneralC
     private var musicView: PeerInfoMusicView?
     private var preloadedWalletCard: WalletCard?
     private var balanceView: PeerInfoBalanceView?
+    private var tauPillView: TauRolePillView? // Taugram
 
     private let backgroundView = PeerInfoBackgroundView(frame: .zero)
     
@@ -2458,6 +2466,11 @@ private final class PeerInfoHeadView<Context: AccountContextProtocol> : GeneralC
             let balanceTransition: ContainedViewLayoutTransition = balanceView.frame.isEmpty ? .immediate : transition
             balanceTransition.updateFrame(view: balanceView, frame: frame)
         }
+        if let tauPillView { // Taugram
+            let below = self.balanceView.map { $0.frame.maxY } ?? statusContainer.frame.maxY // Taugram
+            let size = tauPillView.frame.size // Taugram
+            transition.updateFrame(view: tauPillView, frame: NSMakeRect(floor((containerView.frame.width - size.width) / 2), below + TauRolePillView.spacing, size.width, size.height)) // Taugram
+        } // Taugram
         if let musicView {
             let stripHeight = PeerInfoMusicView.height(colorful: item.colorfulProfile)
             transition.updateFrame(view: musicView, frame: NSMakeRect(0, containerView.frame.height - stripHeight, containerView.frame.width, stripHeight))
@@ -2816,6 +2829,17 @@ private final class PeerInfoHeadView<Context: AccountContextProtocol> : GeneralC
             performSubviewRemoval(view, animated: animated)
             self.balanceView = nil
         }
+        if let role = item.tauRole, !item.editing, !item.isAvatarExpanded { // Taugram
+            let current = self.tauPillView ?? TauRolePillView(frame: .zero) // Taugram
+            if current.superview == nil { // Taugram
+                self.tauPillView = current // Taugram
+                self.addSubview(current) // Taugram
+            } // Taugram
+            current.update(role: role) // Taugram
+        } else if let view = self.tauPillView { // Taugram
+            performSubviewRemoval(view, animated: animated) // Taugram
+            self.tauPillView = nil // Taugram
+        } // Taugram
         
         if  item.hasLiveStream {
             let current: ImageView
@@ -3087,15 +3111,17 @@ private final class PeerInfoHeadView<Context: AccountContextProtocol> : GeneralC
 
 extension NameContainer {
     fileprivate func layoutTauName() {
-        guard let role = self.tauRole, let layout = self.nameView.textLayout, let hostLayer = self.layer else {
-            self.tauNameLayer?.removeFromSuperlayer()
+        guard let role = self.tauRole, let layout = self.nameView.textLayout else {
+            self.tauNameLayer?.removeFromSuperview()
             self.tauNameLayer = nil
+            self.nameView.alphaValue = 1
             return
         }
-        let layer = self.tauNameLayer ?? TauNameGradientLayer()
+        self.nameView.alphaValue = 0
+        let layer = self.tauNameLayer ?? TauNameGradientView(frame: .zero)
         self.tauNameLayer = layer
-        if layer.superlayer !== hostLayer || hostLayer.sublayers?.last !== layer {
-            hostLayer.addSublayer(layer)
+        if layer.superview !== self || self.subviews.last !== layer {
+            self.addSubview(layer)
         }
         layer.update(layout: layout, role: role, dark: theme.colors.isDark, origin: self.nameView.frame.origin, scale: backingScaleFactor)
         if !self.tauShimmered, self.window != nil {

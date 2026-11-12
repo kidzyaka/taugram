@@ -1,4 +1,5 @@
 import Cocoa
+import TauSettings // Taugram
 import TGUIKit
 import Postbox
 import TelegramCore
@@ -337,6 +338,8 @@ final class ChatHeaderBubblesView: View, InteractionContentViewProtocol {
     private let activities: ChatActivitiesModel = ChatActivitiesModel()
 
     private var titleImageView: ImageView?
+    private var tauNameView: TauNameGradientView? // Taugram
+    private var tauShimmered = false // Taugram
 
     private var statusControl: PremiumStatusControl?
     private var leftStatusControl: PremiumStatusControl?
@@ -840,6 +843,16 @@ final class ChatHeaderBubblesView: View, InteractionContentViewProtocol {
             }
             current.image = theme.icons.chat_header_secret_lock
             current.sizeToFit()
+        } else if let role = self.tauRole { // Taugram
+            let current = titleImageView ?? ImageView() // Taugram
+            if titleImageView == nil { // Taugram
+                current.isEventLess = true // Taugram
+                current.toolTip = role.title // Taugram
+                centerBubble.addSubview(current, positioned: .above, relativeTo: avatarControl) // Taugram
+                titleImageView = current // Taugram
+            } // Taugram
+            current.image = tauRoleIcon(role) // Taugram
+            current.sizeToFit() // Taugram
         } else {
             titleImageView?.removeFromSuperview()
             titleImageView = nil
@@ -1030,7 +1043,7 @@ final class ChatHeaderBubblesView: View, InteractionContentViewProtocol {
 
         let titleString = NSMutableAttributedString()
         titleString.append(result.title)
-        titleString.addAttribute(.foregroundColor, value: theme.colors.text, range: titleString.range)
+        titleString.addAttribute(.foregroundColor, value: self.tauRole != nil ? NSColor.clear : theme.colors.text, range: titleString.range) // Taugram
         titleString.addAttribute(.font, value: NSFont.medium(.text), range: titleString.range)
 
         let statusString = NSMutableAttributedString()
@@ -1251,6 +1264,7 @@ final class ChatHeaderBubblesView: View, InteractionContentViewProtocol {
 
         let titleRect = NSRect(x: titleOriginX, y: textOriginY, width: titleSize.width, height: titleSize.height)
         transition.updateFrame(view: titleView, frame: titleRect)
+        self.layoutTauName(titleRect: titleRect) // Taugram
 
         if let leftStatusControl {
             let y = floorToScreenPixels(backingScaleFactor, titleRect.minY + (titleSize.height - leftStatusControl.frame.height) / 2)
@@ -1274,6 +1288,33 @@ final class ChatHeaderBubblesView: View, InteractionContentViewProtocol {
             if activitiesVisible {
                 transition.updateFrame(view: view, frame: NSRect(x: baseTextOriginX, y: textOriginY + titleSize.height - 1, width: secondLineSize.width, height: secondLineSize.height))
             }
+        }
+    }
+}
+
+extension ChatHeaderBubblesView {
+    fileprivate var tauRole: TauContributorRole? {
+        guard let peerView, chatInteraction.mode == .history, let peer = peerViewMainPeer(peerView), peer.id == peerView.peerId, peer.id != chatInteraction.interactionContext.peerId else {
+            return nil
+        }
+        return TauContributors.role(peer.id)
+    }
+
+    fileprivate func layoutTauName(titleRect: NSRect) {
+        guard let role = self.tauRole, let layout = self.titleView.textLayout else {
+            self.tauNameView?.removeFromSuperview()
+            self.tauNameView = nil
+            return
+        }
+        let view = self.tauNameView ?? TauNameGradientView(frame: .zero)
+        self.tauNameView = view
+        if view.superview !== centerBubble || centerBubble.subviews.last !== view {
+            centerBubble.addSubview(view)
+        }
+        view.update(layout: layout, role: role, dark: theme.colors.isDark, origin: titleRect.origin, scale: backingScaleFactor)
+        if !self.tauShimmered, self.window != nil {
+            self.tauShimmered = true
+            view.shimmer(layout: layout, scale: backingScaleFactor)
         }
     }
 }

@@ -373,7 +373,7 @@ public class ChatRowView: TableRowView, Notifable, MultipleSelectable, ChatTextS
     
     private var forwardAccessory: ChatBubbleAccessoryForward? = nil
     private var viaAccessory: ChatBubbleViaAccessory? = nil
-    private var tauNameLayer: TauNameGradientLayer? = nil // Taugram
+    private var tauNameLayer: TauNameGradientView? = nil // Taugram
     
     
     public let bubbleView = ChatMessageBubbleBackdrop()
@@ -2982,15 +2982,15 @@ extension PremiumStatusLayer: ChatLayerHostedVisibility {}
 
 extension ChatRowView {
     fileprivate func fillTauName(_ item: ChatRowItem) {
-        guard let author = item.authorText, !(item.isBubbled && !item.hasBubble), let role = TauContributors.role(item.peer?.id), let hostLayer = rowView.layer else {
-            self.tauNameLayer?.removeFromSuperlayer()
+        guard let author = item.authorText, !(item.isBubbled && !item.hasBubble), let role = TauContributors.role(item.peer?.id) else {
+            self.tauNameLayer?.removeFromSuperview()
             self.tauNameLayer = nil
             return
         }
-        let layer = self.tauNameLayer ?? TauNameGradientLayer()
+        let layer = self.tauNameLayer ?? TauNameGradientView(frame: .zero)
         self.tauNameLayer = layer
-        if layer.superlayer !== hostLayer || hostLayer.sublayers?.last !== layer {
-            hostLayer.addSublayer(layer)
+        if layer.superview !== rowView || rowView.subviews.last !== layer {
+            rowView.addSubview(layer)
         }
         layer.update(layout: author, role: role, dark: theme.colors.isDark, origin: namePoint(item), scale: backingScaleFactor)
     }

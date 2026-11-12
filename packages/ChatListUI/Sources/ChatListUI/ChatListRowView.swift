@@ -1181,7 +1181,7 @@ public class ChatListRowView: TableRowView {
     private var chatNameText: ChatListInlineText? = nil
     private var dateTextView: ChatListTextLayer? = nil
     private var displayNameView: ChatListTextLayer? = nil
-    private var tauNameLayer: TauNameGradientLayer? = nil // Taugram
+    private var tauNameLayer: TauNameGradientView? = nil // Taugram
     private var monoforumMessagesView: InteractiveTextView? = nil
     private var messageText: ChatListInlineText? = nil
 
@@ -1842,12 +1842,12 @@ public class ChatListRowView: TableRowView {
              }
              if item.ctxDisplayLayout != nil, !item.isActiveSelected, !item.isTopic, item.peerId != item.context.peerId, TauContributors.role(item.peerId) != nil { // Taugram
                  if self.tauNameLayer == nil { // Taugram
-                     let layer = TauNameGradientLayer() // Taugram
-                     self.tauNameLayer = layer // Taugram
-                     contentView.layer?.addSublayer(layer) // Taugram
+                     let view = TauNameGradientView(frame: .zero) // Taugram
+                     self.tauNameLayer = view // Taugram
+                     contentView.addSubview(view) // Taugram
                  } // Taugram
-             } else if let layer = self.tauNameLayer { // Taugram
-                 layer.removeFromSuperlayer() // Taugram
+             } else if let view = self.tauNameLayer { // Taugram
+                 view.removeFromSuperview() // Taugram
                  self.tauNameLayer = nil // Taugram
              } // Taugram
              
@@ -3102,6 +3102,7 @@ public class ChatListRowView: TableRowView {
             if let tauNameLayer = self.tauNameLayer, let layout = item.ctxDisplayLayout, let role = TauContributors.role(item.peerId) { // Taugram
                 tauNameLayer.update(layout: layout, role: role, dark: theme.colors.isDark, origin: displayNameView.frame.origin, scale: backingScaleFactor) // Taugram
             } // Taugram
+            displayNameView.opacity = self.tauNameLayer != nil ? 0 : 1 // Taugram
             
             var offset: CGFloat = 0
             if let chatName = item.ctxChatNameLayout {

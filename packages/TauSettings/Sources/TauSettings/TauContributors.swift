@@ -37,25 +37,11 @@ public enum TauContributors {
     }
 
     public static func colors(_ role: TauContributorRole, dark: Bool) -> [NSColor] {
-        switch (role, dark) {
-        case (.creator, false):
-            return [hex(0xBA7517), hex(0xD4537E), hex(0x534AB7)]
-        case (.creator, true):
-            return [hex(0xFAC775), hex(0xED93B1), hex(0xAFA9EC)]
-        case (.contributor, false):
-            return [hex(0x534AB7), hex(0x7F77DD)]
-        case (.contributor, true):
-            return [hex(0xAFA9EC), hex(0xCECBF6)]
-        }
+        return dark ? [hex(0x8F86F0), hex(0xC58BF2)] : [hex(0x534AB7), hex(0x7F77DD)]
     }
 
     public static func iconColor(_ role: TauContributorRole) -> NSColor {
-        switch role {
-        case .creator:
-            return hex(0xBA7517)
-        case .contributor:
-            return hex(0x534AB7)
-        }
+        return hex(0x534AB7)
     }
 }
 
@@ -96,6 +82,7 @@ public final class TauNameGradientLayer: SimpleLayer {
         let bounds = CGRect(origin: .zero, size: self.layoutSize)
         mask.frame = bounds
         mask.bounds = bounds.insetBy(dx: -2, dy: -3)
+        mask.display()
         return mask
     }
 
@@ -111,7 +98,7 @@ public final class TauNameGradientLayer: SimpleLayer {
         self.textMask.update(tauWhiteLayout(layout))
         self.textMask.frame = bounds
         self.textMask.bounds = bounds.insetBy(dx: -2, dy: -3)
-        self.textMask.setNeedsDisplay()
+        self.textMask.display()
         CATransaction.commit()
     }
 
@@ -160,3 +147,38 @@ public func tauRoleIcon(_ role: TauContributorRole, size: CGFloat = 16) -> CGIma
         CTLineDraw(line, ctx)
     })
 }
+
+public final class TauNameGradientView: NSView {
+    private let gradientLayer = TauNameGradientLayer()
+
+    public override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        self.wantsLayer = true
+        self.layer?.masksToBounds = false
+        self.layer?.zPosition = 10
+        self.layer?.addSublayer(self.gradientLayer)
+    }
+
+    public required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    public override var isFlipped: Bool {
+        return true
+    }
+
+    public override func hitTest(_ point: NSPoint) -> NSView? {
+        return nil
+    }
+
+    public func update(layout: TextViewLayout, role: TauContributorRole, dark: Bool, origin: NSPoint, scale: CGFloat) {
+        self.frame = CGRect(origin: origin, size: layout.layoutSize)
+        self.layer?.zPosition = 10
+        self.gradientLayer.update(layout: layout, role: role, dark: dark, origin: .zero, scale: scale)
+    }
+
+    public func shimmer(layout: TextViewLayout, scale: CGFloat) {
+        self.gradientLayer.shimmer(layout: layout, scale: scale)
+    }
+}
+
