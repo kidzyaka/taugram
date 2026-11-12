@@ -21,7 +21,8 @@ private final class Arguments {
     let toggleGhost: (WritableKeyPath<TauGhostSettings, Bool>?) -> Void
     let toggleValue: (WritableKeyPath<TauSettingsValues, Bool>) -> Void
     let chatLock: (TauChatLockAction) -> Void
-    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void, toggleValue: @escaping (WritableKeyPath<TauSettingsValues, Bool>) -> Void, chatLock: @escaping (TauChatLockAction) -> Void) {
+    let openColorEditor: () -> Void
+    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void, toggleValue: @escaping (WritableKeyPath<TauSettingsValues, Bool>) -> Void, chatLock: @escaping (TauChatLockAction) -> Void, openColorEditor: @escaping () -> Void) {
         self.toggleDangerousFeatures = toggleDangerousFeatures
         self.reviewConsent = reviewConsent
         self.selectAppIcon = selectAppIcon
@@ -32,6 +33,7 @@ private final class Arguments {
         self.toggleGhost = toggleGhost
         self.toggleValue = toggleValue
         self.chatLock = chatLock
+        self.openColorEditor = openColorEditor
     }
 }
 
@@ -63,6 +65,7 @@ private let _id_message_seconds = InputDataIdentifier("_id_message_seconds")
 private let _id_hide_stories = InputDataIdentifier("_id_hide_stories")
 private let _id_peer_id = InputDataIdentifier("_id_peer_id")
 private let _id_oled = InputDataIdentifier("_id_oled")
+private let _id_color_editor = InputDataIdentifier("_id_color_editor")
 private let _id_chat_lock_set = InputDataIdentifier("_id_chat_lock_set")
 private let _id_chat_lock_change = InputDataIdentifier("_id_chat_lock_change")
 private let _id_chat_lock_remove = InputDataIdentifier("_id_chat_lock_remove")
@@ -127,11 +130,15 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
     index += 1
 
     //TODOLANG
-    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_oled, data: .init(name: "OLED Mode", color: theme.colors.text, type: .switchable(state.values.oledMode), viewType: .singleItem, action: arguments.toggleOLED)))
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_oled, data: .init(name: "OLED Mode", color: theme.colors.text, type: .switchable(state.values.oledMode), viewType: .firstItem, action: arguments.toggleOLED)))
     index += 1
 
     //TODOLANG
-    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Pure black theme without blur or translucency. Theme and color settings stay locked while it is on; turning it off brings your previous theme back."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_color_editor, data: .init(name: "Color Editor", color: theme.colors.text, type: .next, viewType: .lastItem, action: arguments.openColorEditor)))
+    index += 1
+
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Pure black theme without blur or translucency. Theme and color settings stay locked while it is on; turning it off brings your previous theme back. The color editor changes any of the palette's colors and exports or imports .palette files."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
     index += 1
 
     entries.append(.sectionId(sectionId, type: .normal))
@@ -414,6 +421,8 @@ public func TauSettingsController(context: any AccountContextProtocol) -> InputD
                 TauChatLock.shared.removePasscode()
             })
         }
+    }, openColorEditor: {
+        getController?()?.navigationController?.push(TauColorEditorController(context: context))
     })
 
     let chatLockChanges = Signal<Void, NoError>.single(Void()) |> then(TauChatLock.shared.changes)
