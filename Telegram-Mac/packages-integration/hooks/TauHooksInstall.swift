@@ -23,6 +23,7 @@ func installTaugramSettingsHooks(_ hooks: inout SettingsNavigationHooks) {
 
 func presentTaugramConsentIfNeeded(window: Window) {
     DispatchQueue.main.async {
+        installTauChatLock(window: window)
         showTauConsentIfNeeded(for: window)
     }
 }

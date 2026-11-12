@@ -1,4 +1,5 @@
 import Cocoa
+import TauSettings // Taugram
 import TGUIKit
 import TelegramCore
 import CalendarUtils
@@ -3222,6 +3223,11 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
         
     public override func viewDidLoad() {
         super.viewDidLoad()
+        self.tauLockView = installTauChatLock(on: self.view, peerId: self.chatLocation.peerId, onUnlock: { [weak self] in // Taugram
+            guard let self else { return } // Taugram
+            self.tauLockView = nil // Taugram
+            self.window?.makeFirstResponder(self.firstResponder()) // Taugram
+        }) // Taugram
         genericView.inputView.sendButton.setAIRewriteAvailable(alwaysUseAISettings?.mode != nil)
         genericView.onForumSidebarToggle = { [weak self] open in
             guard let self else { return }
@@ -11443,6 +11449,10 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
     }
     
     public override func returnKeyAction() -> KeyHandlerResult {
+        if let tauLockView = self.tauLockView { // Taugram
+            tauLockView.submit() // Taugram
+            return .invoked // Taugram
+        } // Taugram
         if let transcription = chatInteraction.voiceTranscription, transcription.isActive, chatInteraction.presentation.recordingState != nil {
             transcription.perform(.edit)
             return .invoked
@@ -11583,6 +11593,7 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
     }
 
     deinit {
+        TauChatLock.shared.relock(self.chatLocation.peerId) // Taugram
         cleanup()
     }
 
@@ -11801,6 +11812,10 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
 
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        if let tauLockView = self.tauLockView { // Taugram
+            tauLockView.superview?.addSubview(tauLockView) // Taugram
+            tauLockView.focus() // Taugram
+        } // Taugram
         isAnalyticsVisible = true
 
         isPushedGlobalBackground = true
@@ -12262,6 +12277,9 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
     }
     
     public override func firstResponder() -> NSResponder? {
+        if let tauLockView = self.tauLockView { // Taugram
+            return tauLockView.passcodeResponder // Taugram
+        } // Taugram
         if mode == .preview {
             return self.genericView
         }
@@ -12334,6 +12352,7 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
     private let isAdChat: Bool
     private let focusTarget: ChatFocusTarget?
     public let mode: ChatMode
+    private var tauLockView: TauChatLockView? // Taugram
     
     private let sizeValue = ValuePromise<NSSize>(ignoreRepeated: true)
     

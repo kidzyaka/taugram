@@ -1,4 +1,5 @@
 import Cocoa
+import TauSettings // Taugram
 import SwiftSignalKit
 import Postbox
 import TelegramCore
@@ -713,7 +714,7 @@ final class SharedNotificationManager : NSObject, NSUserNotificationCenterDelega
                                     subText = nil
                                 }
                             case .messages:
-                                if !inAppSettings.displayPreviews || !presentation.showPreview || message.peers[message.id.peerId] is TelegramSecretChat || screenIsLocked {
+                                if !inAppSettings.displayPreviews || !presentation.showPreview || message.peers[message.id.peerId] is TelegramSecretChat || screenIsLocked || TauChatLock.shared.isLockedChat(message.id.peerId) { // Taugram
                                     text = strings().notificationLockedPreview
                                     subText = nil
                                 }
@@ -757,8 +758,8 @@ final class SharedNotificationManager : NSObject, NSUserNotificationCenterDelega
                             notification.title = title
                             notification.informativeText = text as String
                             notification.subtitle = subText
-                            notification.contentImage = screenIsLocked || presentation.hideSender ? nil : images[message.id]
-                            notification.hasReplyButton = hasReplyButton
+                            notification.contentImage = screenIsLocked || presentation.hideSender || TauChatLock.shared.isLockedChat(message.id.peerId) ? nil : images[message.id] // Taugram
+                            notification.hasReplyButton = hasReplyButton && !TauChatLock.shared.isLockedChat(message.id.peerId) // Taugram
                             
                             notification.hasActionButton = !message.wasScheduled
                             notification.otherButtonTitle = strings().notificationMarkAsRead

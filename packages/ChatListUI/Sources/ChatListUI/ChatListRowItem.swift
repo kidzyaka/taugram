@@ -1,4 +1,5 @@
 import Cocoa
+import TauSettings // Taugram
 import TGUIKit
 import Postbox
 import TelegramCore
@@ -610,6 +611,9 @@ public class ChatListRowItem: TableRowItem {
         var messageText: NSAttributedString
         if groupItems.count == 1 {
             messageText = chatListText(account: context.account, for: message, messagesCount: 1, folder: true)
+            if let message, TauChatLock.shared.isLockedChat(message.id.peerId) { // Taugram
+                messageText = tauLockedChatText() // Taugram
+            } // Taugram
         } else {
             let textString = NSMutableAttributedString(string: "")
             var isFirst = true
@@ -1026,7 +1030,7 @@ public class ChatListRowItem: TableRowItem {
                 var contentImageSpecs = self.contentImageSpecs
                 let contentImageSize = self.contentImageSize
                 
-                if draft == nil, !isSecret, forumTopicItems.isEmpty {
+                if draft == nil, !isSecret, forumTopicItems.isEmpty, !TauChatLock.shared.isLockedChat(renderedPeer.peerId) { // Taugram
                     var index: Int32 = 0
                     let insert:(Message, Media, Bool)->Void = { message, media, increment in
                         var message = message
@@ -1173,6 +1177,9 @@ public class ChatListRowItem: TableRowItem {
                 }
             } else {
                 messageText = chatListText(account: context.account, for: message, messagesCount: messages.count, renderedPeer: renderedPeer, draft: draft, folder: false, applyUserName: false, isPremium: context.isPremium)
+                if TauChatLock.shared.isLockedChat(renderedPeer.peerId) { // Taugram
+                    messageText = tauLockedChatText() // Taugram
+                } // Taugram
                 if !textLeftCutout.isZero {
                     textCutout = TextViewCutout(topLeft: CGSize(width: textLeftCutout, height: 14))
                 }
@@ -2347,11 +2354,14 @@ public class ChatListRowItem: TableRowItem {
                 }
             }
             
-            if peerId != nil {
+            if let peerId, !TauChatLock.shared.isLockedChat(peerId) { // Taugram
                 firstGroup.append(ContextMenuItem(strings().chatListContextPreview, handler: {
                     previewChat()
                 }, itemImage: MenuAnimation.menu_eye.value))
             }
+            if let peerId, !mode.savedMessages, let item = tauChatLockMenuItem(context: context, peerId: peerId) { // Taugram
+                firstGroup.append(item) // Taugram
+            } // Taugram
             
             var submenu: [ContextMenuItem] = []
             if let peerId = peerId, peerId.namespace != Namespaces.Peer.SecretChat, !mode.savedMessages {
@@ -2718,7 +2728,7 @@ public class ChatListRowItem: TableRowItem {
     }
     
     public func previewChat() {
-        guard let peerId = peerId else {
+        guard let peerId = peerId, !TauChatLock.shared.isLockedChat(peerId) else { // Taugram
             return
         }
         if let peer = self.peer, !peer.hasSensitiveContent(platform: "ios", contentSettings: context.contentSettings) {

@@ -20,7 +20,8 @@ private final class Arguments {
     let toggleOLED: () -> Void
     let toggleGhost: (WritableKeyPath<TauGhostSettings, Bool>?) -> Void
     let toggleValue: (WritableKeyPath<TauSettingsValues, Bool>) -> Void
-    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void, toggleValue: @escaping (WritableKeyPath<TauSettingsValues, Bool>) -> Void) {
+    let chatLock: (TauChatLockAction) -> Void
+    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void, toggleValue: @escaping (WritableKeyPath<TauSettingsValues, Bool>) -> Void, chatLock: @escaping (TauChatLockAction) -> Void) {
         self.toggleDangerousFeatures = toggleDangerousFeatures
         self.reviewConsent = reviewConsent
         self.selectAppIcon = selectAppIcon
@@ -30,11 +31,20 @@ private final class Arguments {
         self.toggleOLED = toggleOLED
         self.toggleGhost = toggleGhost
         self.toggleValue = toggleValue
+        self.chatLock = chatLock
     }
+}
+
+enum TauChatLockAction {
+    case set
+    case change
+    case remove
+    case toggleBiometrics
 }
 
 private struct State: Equatable {
     var values: TauSettingsValues
+    var chatLockHasPasscode: Bool
     var coreDangerousFeaturesAllowed: Bool
     var canViewPeerId: Bool
 }
@@ -54,6 +64,10 @@ private let _id_message_seconds = InputDataIdentifier("_id_message_seconds")
 private let _id_hide_stories = InputDataIdentifier("_id_hide_stories")
 private let _id_peer_id = InputDataIdentifier("_id_peer_id")
 private let _id_oled = InputDataIdentifier("_id_oled")
+private let _id_chat_lock_set = InputDataIdentifier("_id_chat_lock_set")
+private let _id_chat_lock_change = InputDataIdentifier("_id_chat_lock_change")
+private let _id_chat_lock_biometrics = InputDataIdentifier("_id_chat_lock_biometrics")
+private let _id_chat_lock_remove = InputDataIdentifier("_id_chat_lock_remove")
 private let _id_ghost_all = InputDataIdentifier("_id_ghost_all")
 private let _id_keep_deleted = InputDataIdentifier("_id_keep_deleted")
 private let _id_keep_edits = InputDataIdentifier("_id_keep_edits")
@@ -166,6 +180,43 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
     //TODOLANG
     entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Profiles show the ID in Bot API format and the data center of the profile photo. Click the ID to copy it."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
     index += 1
+
+    entries.append(.sectionId(sectionId, type: .normal))
+    sectionId += 1
+
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("CHAT LOCK"), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+    index += 1
+
+    if state.chatLockHasPasscode {
+        //TODOLANG
+        entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_chat_lock_change, data: .init(name: "Change Passcode", color: theme.colors.text, type: .next, viewType: .firstItem, action: {
+            arguments.chatLock(.change)
+        })))
+        index += 1
+        //TODOLANG
+        entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_chat_lock_biometrics, data: .init(name: "Unlock with Touch ID", color: theme.colors.text, type: .switchable(state.values.chatLockBiometrics), viewType: .innerItem, action: {
+            arguments.chatLock(.toggleBiometrics)
+        })))
+        index += 1
+        //TODOLANG
+        entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_chat_lock_remove, data: .init(name: "Remove Passcode", color: theme.colors.redUI, type: .none, viewType: .lastItem, action: {
+            arguments.chatLock(.remove)
+        })))
+        index += 1
+        //TODOLANG
+        entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Locked chats: \(state.values.lockedChats.count). Lock a chat from its menu in the chat list. A locked chat asks for the passcode each time it opens, and its previews and notifications stay hidden. This protects the interface only: the chat database is encrypted on disk only with the app passcode."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+        index += 1
+    } else {
+        //TODOLANG
+        entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_chat_lock_set, data: .init(name: "Set Passcode", color: theme.colors.accent, type: .none, viewType: .singleItem, action: {
+            arguments.chatLock(.set)
+        })))
+        index += 1
+        //TODOLANG
+        entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Hide chats behind a passcode. After you set one, choose Lock Chat in a chat's menu in the chat list."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+        index += 1
+    }
 
     entries.append(.sectionId(sectionId, type: .normal))
     sectionId += 1
@@ -357,10 +408,32 @@ public func TauSettingsController(context: any AccountContextProtocol) -> InputD
             current[keyPath: keyPath] = !current[keyPath: keyPath]
             return current
         }
+    }, chatLock: { action in
+        switch action {
+        case .set:
+            showTauChatLockSetup(for: window)
+        case .change:
+            showTauChatLockVerify(for: window, completion: {
+                showTauChatLockSetup(for: window)
+            })
+        case .remove:
+            showTauChatLockVerify(for: window, completion: {
+                TauChatLock.shared.removePasscode()
+            })
+        case .toggleBiometrics:
+            showTauChatLockVerify(for: window, completion: {
+                TauSettings.shared.update { current in
+                    var current = current
+                    current.chatLockBiometrics = !current.chatLockBiometrics
+                    return current
+                }
+            })
+        }
     })
 
-    let signal = combineLatest(TauSettings.shared.signal, canViewPeerId.get()) |> map { values, canViewPeerId in
-        return State(values: values, coreDangerousFeaturesAllowed: TauCoreSettings.shared.dangerousFeaturesAllowed, canViewPeerId: canViewPeerId)
+    let chatLockChanges = Signal<Void, NoError>.single(Void()) |> then(TauChatLock.shared.changes)
+    let signal = combineLatest(TauSettings.shared.signal, canViewPeerId.get(), chatLockChanges) |> map { values, canViewPeerId, _ in
+        return State(values: values, chatLockHasPasscode: TauChatLock.shared.hasPasscode, coreDangerousFeaturesAllowed: TauCoreSettings.shared.dangerousFeaturesAllowed, canViewPeerId: canViewPeerId)
     } |> deliverOnPrepareQueue |> map { state in
         return InputDataSignalValue(entries: entries(state, arguments: arguments))
     }
