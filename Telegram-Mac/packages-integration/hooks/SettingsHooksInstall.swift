@@ -441,6 +441,7 @@ private func mapSettingsBoostSource(_ source: SettingsBoostSource) -> BoostChann
 
 private func makeSettingsNavigationHooks() -> SettingsNavigationHooks {
     var hooks = SettingsNavigationHooks()
+    installTaugramSettingsHooks(&hooks) // Taugram
     hooks.openQrStudio = { context, morphSource in
         showQrStudio(context: context, peerId: context.peerId, morphSource: morphSource)
     }

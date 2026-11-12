@@ -915,6 +915,7 @@ final class AuthorizedApplicationContext: NSObject, SplitViewDelegate {
                 showModal(with: SuggestionLocalizationViewController(context, suggestionInfo: suggestionInfo), for: window)
             }
         }))
+        presentTaugramConsentIfNeeded(window: window) // Taugram
         
 
         someActionsDisposable.add(context.engine.peers.managedUpdatedRecentPeers().start())

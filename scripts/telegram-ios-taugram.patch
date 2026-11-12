@@ -1,0 +1,92 @@
+diff --git a/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift b/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..9ed47610824ca34173c29e9ccabda1b62063f5e9
+--- /dev/null
++++ b/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift
+@@ -0,0 +1,86 @@
++import Foundation
++import Postbox
++
++public struct TauGhostFlags: Equatable {
++    public var hideReadReceipts: Bool
++    public var hideOnlineStatus: Bool
++    public var hideTyping: Bool
++    public var hideStoryViews: Bool
++    public var hideContentConsumption: Bool
++    public var hideChannelViews: Bool
++
++    public init(hideReadReceipts: Bool = false, hideOnlineStatus: Bool = false, hideTyping: Bool = false, hideStoryViews: Bool = false, hideContentConsumption: Bool = false, hideChannelViews: Bool = false) {
++        self.hideReadReceipts = hideReadReceipts
++        self.hideOnlineStatus = hideOnlineStatus
++        self.hideTyping = hideTyping
++        self.hideStoryViews = hideStoryViews
++        self.hideContentConsumption = hideContentConsumption
++        self.hideChannelViews = hideChannelViews
++    }
++
++    public static let off = TauGhostFlags()
++
++    public var isActive: Bool {
++        return self != .off
++    }
++}
++
++public struct TauCoreFlags: Equatable {
++    public var dangerousFeaturesAllowed: Bool
++    public var ghost: TauGhostFlags
++    public var ghostByAccount: [PeerId: TauGhostFlags]
++    public var keepDeletedMessages: Bool
++    public var keepEditHistory: Bool
++
++    public init(dangerousFeaturesAllowed: Bool = false, ghost: TauGhostFlags = .off, ghostByAccount: [PeerId: TauGhostFlags] = [:], keepDeletedMessages: Bool = false, keepEditHistory: Bool = false) {
++        self.dangerousFeaturesAllowed = dangerousFeaturesAllowed
++        self.ghost = ghost
++        self.ghostByAccount = ghostByAccount
++        self.keepDeletedMessages = keepDeletedMessages
++        self.keepEditHistory = keepEditHistory
++    }
++}
++
++public final class TauCoreSettings {
++    public static let shared = TauCoreSettings()
++
++    private let lock = NSLock()
++    private var flags = TauCoreFlags()
++
++    private init() {
++    }
++
++    public var current: TauCoreFlags {
++        self.lock.lock()
++        defer { self.lock.unlock() }
++        return self.flags
++    }
++
++    public func set(_ flags: TauCoreFlags) {
++        self.lock.lock()
++        self.flags = flags
++        self.lock.unlock()
++    }
++
++    public var dangerousFeaturesAllowed: Bool {
++        return self.current.dangerousFeaturesAllowed
++    }
++
++    public func ghost(for accountPeerId: PeerId) -> TauGhostFlags {
++        let flags = self.current
++        guard flags.dangerousFeaturesAllowed else {
++            return .off
++        }
++        return flags.ghostByAccount[accountPeerId] ?? flags.ghost
++    }
++
++    public var keepsDeletedMessages: Bool {
++        let flags = self.current
++        return flags.dangerousFeaturesAllowed && flags.keepDeletedMessages
++    }
++
++    public var keepsEditHistory: Bool {
++        let flags = self.current
++        return flags.dangerousFeaturesAllowed && flags.keepEditHistory
++    }
++}

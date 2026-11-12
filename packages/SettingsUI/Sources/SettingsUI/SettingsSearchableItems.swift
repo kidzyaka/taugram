@@ -27,6 +27,7 @@ enum SettingsSearchableItemIcon {
     case passport
     case support
     case faq
+    case taugram
 }
 
 extension SettingsSearchableItemIcon {
@@ -52,6 +53,8 @@ extension SettingsSearchableItemIcon {
             return theme.icons.settingsAskQuestion
         case .faq:
             return theme.icons.settingsFaq
+        case .taugram:
+            return SettingsNavigationHooks.shared.taugram?.icon()
         default:
             return nil
         }
@@ -689,7 +692,14 @@ func settingsSearchableItems<Context: AccountContextProtocol>(context: Context, 
                 })
             })
             allItems.append(faq)
-            
+
+            if let taugram = SettingsNavigationHooks.shared.taugram { // Taugram
+                //TODOLANG
+                allItems.append(SettingsSearchableItem<Context>(id: .taugram(0), title: "Taugram", alternate: ["ghost", "dangerous features", "deleted messages", "AyuGram"], icon: .taugram, breadcrumbs: [], present: { context, _, present in
+                    present(.push, taugram.makeController(context))
+                }))
+            }
+
             return allItems
     }
 }

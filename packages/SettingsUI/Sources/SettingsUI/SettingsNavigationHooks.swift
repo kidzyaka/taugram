@@ -86,6 +86,7 @@ public enum SettingsStarsCurrency {
 }
 
 public struct SettingsNavigationHooks {
+    public var taugram: SettingsTaugramEntry? = nil // Taugram
     public var showMultigift: (any AccountContextProtocol, (() -> NSView?)?) -> Void = { _, _ in }
     public var openQrStudio: (any AccountContextProtocol, (() -> NSView?)?) -> Void = { _, _ in }
     public var openQrStudioWithContext: ((any AccountContextProtocol, (() -> NSView?)?, AnalyticsContext) -> Void)?

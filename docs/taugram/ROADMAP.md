@@ -58,7 +58,7 @@ Taugram — неофициальный клиент Telegram для macOS на �
 
 | Модуль | Где | Что внутри |
 |---|---|---|
-| `TauCoreSettings` | `TC/Tau/TauCoreSettings.swift` | Потокобезопасные флаги для ядра (`static let shared` + `NSLock`, как `NetworkLivenessFallback`). API с ключом аккаунта: `ghost(for: accountPeerId)` |
+| `TauCoreSettings` | `TC/Tau/TauCoreSettings.swift` | Потокобезопасные флаги для ядра (`static let shared` + `NSLock`). API с ключом аккаунта: `ghost(for: accountPeerId)` |
 | `TauDeletedMessageAttribute` | `TC/Tau/` | `MessageAttribute`: время удаления. Регистрируется в `declaredEncodables` (`TC/Account/AccountManager.swift:88`) |
 | `TauEditHistory` | `TC/Tau/` | Прежние версии сообщений в item cache |
 | `packages/TauSettings` | новый пакет, не экран | Хранение настроек, синхронная загрузка при старте, проброс в `TauCoreSettings`, сигналы для UI |
@@ -124,6 +124,8 @@ Taugram — неофициальный клиент Telegram для macOS на �
 - **Песочница:** release-конфигурация подписывается `Telegram-Sandbox.entitlements` для всех каналов (`buildbox/build-mac.sh:62-66`). `network.server` в ней разрешён — это нужно MCP.
 
 ## 4. Фаза 1 — каркас
+
+Статус: код всех шести пунктов в ветке `taugram/foundation`, сборка проходит. Окно согласия, строка «Taugram» и поиск ещё не проверены на живом аккаунте.
 
 1. `TC/Tau/TauCoreSettings.swift` — флаги ядра, по умолчанию всё выключено, рубильник опасных функций.
 2. `packages/TauSettings` — модель настроек, синхронная загрузка, установка в ядро. Вызов из `Telegram-Mac/app/main.swift` до `NSApplicationMain`, рядом с установкой hooks (`main.swift:16–103`).

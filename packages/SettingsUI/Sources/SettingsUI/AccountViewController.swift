@@ -149,6 +149,7 @@ private enum AccountInfoEntry<Context: AccountContextProtocol> : TableItemListNo
     case stories(index: Int, viewType: GeneralViewType)
     case attach(index: Int, AttachMenuBot, viewType: GeneralViewType)
     case general(index: Int, viewType: GeneralViewType)
+    case taugram(index: Int, viewType: GeneralViewType) // Taugram
     case stickers(index: Int, viewType: GeneralViewType)
     case notifications(index: Int, viewType: GeneralViewType, status: NotificationAuthorizationStatus)
     case language(index: Int, viewType: GeneralViewType, current: String)
@@ -191,6 +192,8 @@ private enum AccountInfoEntry<Context: AccountContextProtocol> : TableItemListNo
             return .index(6)
         case .general:
             return .index(7)
+        case .taugram:
+            return .index(998)
         case .proxy:
             return .index(8)
         case .notifications:
@@ -259,6 +262,8 @@ private enum AccountInfoEntry<Context: AccountContextProtocol> : TableItemListNo
         case let .attach(index, _, _):
             return index
         case let  .general(index, _):
+            return index
+        case let .taugram(index, _):
             return index
         case let  .proxy(index, _, _):
             return index
@@ -361,6 +366,13 @@ private enum AccountInfoEntry<Context: AccountContextProtocol> : TableItemListNo
             return GeneralInteractedRowItem(initialSize, stableId: stableId, name: strings().accountSettingsAddAccount, nameStyle: ControlStyle(font: .normal(.title), foregroundColor: theme.colors.accentIcon), type: .none, viewType: viewType, action: {
                 arguments.addAccount(accounts)
             }, thumb: GeneralThumbAdditional(thumb: theme.icons.account_add_account, textInset: 35, thumbInset: 0), inset:NSEdgeInsets(left: 12, right: 12), customTheme: .initialize(theme, background: .clear))
+        case let .taugram(_, viewType):
+            let icon = SettingsNavigationHooks.shared.taugram?.icon()
+            return GeneralInteractedRowItem(initialSize, stableId: stableId, name: "Taugram", icon: icon, activeIcon: icon, type: .next, viewType: viewType, action: {
+                if let entry = SettingsNavigationHooks.shared.taugram {
+                    arguments.presentController(entry.makeController(arguments.context), true)
+                }
+            }, inset:NSEdgeInsets(left: 12, right: 12), customTheme: .initialize(theme, background: .clear))
         case let .general(_, viewType):
             return GeneralInteractedRowItem(initialSize, stableId: stableId, name: strings().accountSettingsGeneral, icon: theme.icons.settingsGeneral, activeIcon: theme.icons.settingsGeneralActive, type: .next, viewType: viewType, action: {
                 arguments.presentController(GeneralSettingsViewController(arguments.context), true)
@@ -651,6 +663,10 @@ private func accountInfoEntries<Context: AccountContextProtocol>(peerView:PeerVi
     entries.append(.whiteSpace(index: index, height: 10))
     index += 1
     
+    if SettingsNavigationHooks.shared.taugram != nil { // Taugram
+        entries.append(.taugram(index: index, viewType: .singleItem))
+        index += 1
+    }
     entries.append(.general(index: index, viewType: .singleItem))
     index += 1
     entries.append(.notifications(index: index, viewType: .singleItem, status: unAuthStatus))
@@ -1268,6 +1284,10 @@ open class AccountViewController<Context: AccountContextProtocol> : TelegramGene
                 }
             } else if let controller = navigation.controller as? InputDataController {
                 switch true {
+                case controller.identifier == "taugram": // Taugram
+                    if let item = tableView.item(stableId: AnyHashable(AccountInfoEntryId.index(998))) {
+                        _ = tableView.select(item: item)
+                    }
                 case controller.identifier == "proxy":
                     if let item = tableView.item(stableId: AnyHashable(AccountInfoEntryId.index(8))) {
                         _ = tableView.select(item: item)

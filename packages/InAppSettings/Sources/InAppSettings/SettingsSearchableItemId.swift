@@ -16,6 +16,7 @@ public enum SettingsSearchableItemId: Hashable {
     case wallet(Int32)
     case support(Int32)
     case faq(Int32)
+    case taugram(Int32) // Taugram
     
     private var namespace: Int32 {
         switch self {
@@ -49,6 +50,8 @@ public enum SettingsSearchableItemId: Hashable {
             return 14
         case .faq:
             return 15
+        case .taugram:
+            return 16
         }
     }
     
@@ -68,7 +71,8 @@ public enum SettingsSearchableItemId: Hashable {
              let .passport(id),
              let .wallet(id),
              let .support(id),
-             let .faq(id):
+             let .faq(id),
+             let .taugram(id):
             return id
         }
     }
@@ -111,6 +115,8 @@ public enum SettingsSearchableItemId: Hashable {
             self = .support(id)
         case 15:
             self = .faq(id)
+        case 16:
+            self = .taugram(id)
         default:
             return nil
         }
