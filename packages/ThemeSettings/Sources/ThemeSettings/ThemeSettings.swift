@@ -1255,10 +1255,14 @@ public func themeUnmodifiedSettings(accountManager: AccountManager<TelegramAccou
 }
 
 
+public var themeSettingsUpdateGuard: ((ThemePaletteSettings, ThemePaletteSettings) -> ThemePaletteSettings)? = nil // Taugram
+
 public func updateThemeInteractivetly(accountManager: AccountManager<TelegramAccountManagerTypes>, f:@escaping (ThemePaletteSettings)->ThemePaletteSettings)-> Signal<Void, NoError> {
     return accountManager.transaction { transaction -> Void in
         transaction.updateSharedData(ApplicationSharedPreferencesKeys.themeSettings, { entry in
-            return PreferencesEntry(f(entry?.get(ThemePaletteSettings.self) ?? ThemePaletteSettings.defaultTheme))
+            let current = entry?.get(ThemePaletteSettings.self) ?? ThemePaletteSettings.defaultTheme // Taugram
+            let updated = f(current) // Taugram
+            return PreferencesEntry(themeSettingsUpdateGuard?(current, updated) ?? updated) // Taugram
         })
     }
 }

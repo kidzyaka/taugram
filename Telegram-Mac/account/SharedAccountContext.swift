@@ -13,6 +13,7 @@ import TelegramContextShare
 #else
 import PrivateCallScreen
 import TelegramContext
+import TauSettings
 #endif
 
 
@@ -96,8 +97,9 @@ class SharedAccountContext {
     /// when `baseSettings` or `batteryLevel` change.
     fileprivate func syncLiquidGlassWithLite() {
         #if !SHARE
-        let desiredGlass = System.liquidGlassAvailable && !isLite(.liquidGlass)
-        let desiredBlur = !isLite(.blur)
+        let oledMode = TauSettings.shared.current.oledMode // Taugram
+        let desiredGlass = System.liquidGlassAvailable && !isLite(.liquidGlass) && !oledMode // Taugram
+        let desiredBlur = !isLite(.blur) && !oledMode // Taugram
         if System.liquidGlass != desiredGlass {
             System.liquidGlass = desiredGlass
         }
@@ -260,6 +262,9 @@ class SharedAccountContext {
             self.updateStatusBar(settings.statusBar)
             forceUpdateStatusBarIconByDockTile(sharedContext: self)
             self.syncLiquidGlassWithLite()
+        })
+        _ = (TauSettings.shared.signal |> map { $0.oledMode } |> distinctUntilChanged |> deliverOnMainQueue).start(next: { [weak self] _ in // Taugram
+            self?.syncLiquidGlassWithLite()
         })
         #endif
         

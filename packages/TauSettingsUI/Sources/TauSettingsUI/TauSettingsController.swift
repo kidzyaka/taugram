@@ -17,13 +17,15 @@ private final class Arguments {
     let toggleMessageSeconds: () -> Void
     let toggleHideStories: () -> Void
     let togglePeerId: () -> Void
-    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void) {
+    let toggleOLED: () -> Void
+    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void) {
         self.toggleDangerousFeatures = toggleDangerousFeatures
         self.reviewConsent = reviewConsent
         self.selectAppIcon = selectAppIcon
         self.toggleMessageSeconds = toggleMessageSeconds
         self.toggleHideStories = toggleHideStories
         self.togglePeerId = togglePeerId
+        self.toggleOLED = toggleOLED
     }
 }
 
@@ -47,6 +49,7 @@ private let _id_debug_core = InputDataIdentifier("_id_debug_core")
 private let _id_message_seconds = InputDataIdentifier("_id_message_seconds")
 private let _id_hide_stories = InputDataIdentifier("_id_hide_stories")
 private let _id_peer_id = InputDataIdentifier("_id_peer_id")
+private let _id_oled = InputDataIdentifier("_id_oled")
 private func _id_app_icon(_ icon: TauAppIcon) -> InputDataIdentifier {
     return InputDataIdentifier("_id_app_icon_\(icon.rawValue)")
 }
@@ -69,6 +72,21 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
 
     //TODOLANG
     entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Taugram \(appVersion) is an unofficial client based on Telegram for macOS."), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+    index += 1
+
+    entries.append(.sectionId(sectionId, type: .normal))
+    sectionId += 1
+
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("APPEARANCE"), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+    index += 1
+
+    //TODOLANG
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_oled, data: .init(name: "OLED Mode", color: theme.colors.text, type: .switchable(state.values.oledMode), viewType: .singleItem, action: arguments.toggleOLED)))
+    index += 1
+
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Pure black theme without blur or translucency. Theme and color settings stay locked while it is on; turning it off brings your previous theme back."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
     index += 1
 
     entries.append(.sectionId(sectionId, type: .normal))
@@ -202,6 +220,8 @@ public func TauSettingsController(context: any AccountContextProtocol) -> InputD
     }, togglePeerId: {
         FastSettings.canViewPeerId = !FastSettings.canViewPeerId
         canViewPeerId.set(FastSettings.canViewPeerId)
+    }, toggleOLED: {
+        setTauOLEDMode(!TauSettings.shared.current.oledMode, context: context)
     })
 
     let signal = combineLatest(TauSettings.shared.signal, canViewPeerId.get()) |> map { values, canViewPeerId in

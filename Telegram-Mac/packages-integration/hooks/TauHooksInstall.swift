@@ -2,10 +2,14 @@ import Cocoa
 import TGUIKit
 import SettingsUI
 import TauSettingsUI
+import ThemeSettings
 
 private let tauSettingsIcon = generateTauSettingsIcon()
 
 func installTaugramSettingsHooks(_ hooks: inout SettingsNavigationHooks) {
+    themeSettingsUpdateGuard = { current, updated in
+        return tauOLEDThemeGuard(current: current, updated: updated)
+    }
     DispatchQueue.main.async {
         TauAppIconManager.applyStored()
     }

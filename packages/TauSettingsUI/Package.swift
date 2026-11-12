@@ -12,6 +12,8 @@ let deps: [(String, String)] = [
     ("TauSettings", "../TauSettings"),
     ("InAppSettings", "../InAppSettings"),
     ("GeneralRows", "../GeneralRows"),
+    ("ThemeSettings", "../ThemeSettings"),
+    ("ColorPalette", "../ColorPalette"),
 ]
 
 let package = Package(
@@ -23,6 +25,7 @@ let package = Package(
     dependencies: [
         .package(name: "SSignalKit", path: "../../submodules/telegram-ios/submodules/SSignalKit"),
         .package(name: "TelegramCore", path: "../../submodules/telegram-ios/submodules/TelegramCore"),
+        .package(name: "Postbox", path: "../../submodules/telegram-ios/submodules/Postbox"),
     ] + deps.map { .package(name: $0.0, path: $0.1) },
     targets: [
         .target(
@@ -30,6 +33,7 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftSignalKit", package: "SSignalKit", condition: nil),
                 .product(name: "TelegramCore", package: "TelegramCore", condition: nil),
+                .product(name: "Postbox", package: "Postbox", condition: nil),
             ] + deps.map { .product(name: $0.0, package: $0.0, condition: nil) },
             path: "Sources/TauSettingsUI"),
     ]

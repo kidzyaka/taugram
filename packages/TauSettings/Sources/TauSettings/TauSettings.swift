@@ -56,6 +56,8 @@ public struct TauSettingsValues: Codable, Equatable {
     public var showMessageSeconds: Bool = false
     public var hideStoriesInChatList: Bool = false
     public var appIcon: String?
+    public var oledMode: Bool = false
+    public var oledThemeSnapshot: Data?
 
     public init() {
     }
@@ -71,6 +73,8 @@ public struct TauSettingsValues: Codable, Equatable {
         self.showMessageSeconds = try container.decodeIfPresent(Bool.self, forKey: .showMessageSeconds) ?? false
         self.hideStoriesInChatList = try container.decodeIfPresent(Bool.self, forKey: .hideStoriesInChatList) ?? false
         self.appIcon = try container.decodeIfPresent(String.self, forKey: .appIcon)
+        self.oledMode = try container.decodeIfPresent(Bool.self, forKey: .oledMode) ?? false
+        self.oledThemeSnapshot = try container.decodeIfPresent(Data.self, forKey: .oledThemeSnapshot)
     }
 
     public var hasValidDangerousConsent: Bool {
