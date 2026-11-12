@@ -151,6 +151,11 @@ shared-core changes. If the frameworks are already built, run
 Run `sh scripts/prepare-telegram-ios.sh --reverse` before checking out a different
 Telegram-iOS revision if the patch is applied.
 
+Taugram keeps its own core changes in `scripts/telegram-ios-taugram.patch`, which the
+same script applies after the macOS patch. `sh scripts/taugram-core-patch.sh export`
+regenerates it from the submodule, `apply` merges it three-way after a submodule
+update, and `check` runs before committing (see `AGENTS.md`, "Commit Checks").
+
 ### Generated TelegramApi sources
 
 `scripts/configure_frameworks.sh` prepares the generated Swift and Objective-C API

@@ -71,6 +71,21 @@ Only the modules you will touch most. Find anything else with `grep -rn "func Na
 - App extensions like `Peer.isForum` and `Peer.displayLetters` shadow TelegramCore members; in a package call them through hooks
 
 
+## Commit Checks
+Run these before every commit.
+
+### Xcode 27 changes
+- `scripts/xcode27.sh revert` before staging, `scripts/xcode27.sh apply` after committing; its deployment-target, warning and shader edits never get committed
+
+### Telegram-iOS patch staging
+Taugram changes to `submodules/telegram-ios` (TelegramCore, Postbox and the rest of the shared core) are committed as `scripts/telegram-ios-taugram.patch`, on top of upstream's `scripts/telegram-ios-macos.patch`, never as submodule state.
+- `sh scripts/taugram-core-patch.sh export` after changing the submodule; stage the patch together with the app code that needs it
+- `sh scripts/taugram-core-patch.sh check` must pass: the patch matches the submodule, and the submodule pointer is an upstream commit
+- Never commit inside `submodules/telegram-ios`; stage the submodule pointer only when moving it to a new upstream commit
+- Moving it: `sh scripts/prepare-telegram-ios.sh --reverse`, check out the new commit, `sh scripts/taugram-core-patch.sh apply`, resolve conflicts, build, `export`
+- New core files go to `submodules/telegram-ios/submodules/TelegramCore/Sources/Tau/`; mark each edit in an upstream core file with `// Taugram`
+
+
 ## Shipping a Beta
 A beta build starts when `beta` is pushed to `origin`.
 1. Commit all pending work on `beta`, including any submodule bumps (`submodules/telegram-ios` carries the Rust engine)
