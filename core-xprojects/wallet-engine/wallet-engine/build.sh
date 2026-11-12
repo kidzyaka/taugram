@@ -65,7 +65,8 @@ lipo -create \
     "$BUILD_DIR/lib/x86_64-apple-darwin/release/libwallet_engine.a" \
     -output "$BUILD_DIR/libwallet_engine.a"
 
-CARGO="$CARGO_BIN" CARGO_TARGET_DIR="$BUILD_DIR/xtask" "$CARGO_BIN" run \
+env -u MACOSX_DEPLOYMENT_TARGET CARGO_PROFILE_RELEASE_BUILD_OVERRIDE_STRIP=none \
+    CARGO="$CARGO_BIN" CARGO_TARGET_DIR="$BUILD_DIR/xtask" "$CARGO_BIN" run \
     --manifest-path xtask/Cargo.toml \
     --target-dir "$BUILD_DIR/xtask" \
     --locked \
