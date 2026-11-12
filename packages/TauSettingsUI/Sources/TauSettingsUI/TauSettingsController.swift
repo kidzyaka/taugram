@@ -39,7 +39,6 @@ enum TauChatLockAction {
     case set
     case change
     case remove
-    case toggleBiometrics
 }
 
 private struct State: Equatable {
@@ -66,7 +65,6 @@ private let _id_peer_id = InputDataIdentifier("_id_peer_id")
 private let _id_oled = InputDataIdentifier("_id_oled")
 private let _id_chat_lock_set = InputDataIdentifier("_id_chat_lock_set")
 private let _id_chat_lock_change = InputDataIdentifier("_id_chat_lock_change")
-private let _id_chat_lock_biometrics = InputDataIdentifier("_id_chat_lock_biometrics")
 private let _id_chat_lock_remove = InputDataIdentifier("_id_chat_lock_remove")
 private let _id_ghost_all = InputDataIdentifier("_id_ghost_all")
 private let _id_keep_deleted = InputDataIdentifier("_id_keep_deleted")
@@ -195,17 +193,12 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
         })))
         index += 1
         //TODOLANG
-        entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_chat_lock_biometrics, data: .init(name: "Unlock with Touch ID", color: theme.colors.text, type: .switchable(state.values.chatLockBiometrics), viewType: .innerItem, action: {
-            arguments.chatLock(.toggleBiometrics)
-        })))
-        index += 1
-        //TODOLANG
         entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_chat_lock_remove, data: .init(name: "Remove Passcode", color: theme.colors.redUI, type: .none, viewType: .lastItem, action: {
             arguments.chatLock(.remove)
         })))
         index += 1
         //TODOLANG
-        entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Locked chats: \(state.values.lockedChats.count). Lock a chat from its menu in the chat list. A locked chat asks for the passcode each time it opens, and its previews and notifications stay hidden. This protects the interface only: the chat database is encrypted on disk only with the app passcode."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+        entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Locked chats: \(state.values.lockedChats.count). Lock a chat from its menu in the chat list, with Touch ID if you want. A locked chat asks for the passcode each time it opens, and its previews and notifications stay hidden. This protects the interface only: the chat database is encrypted on disk only with the app passcode."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
         index += 1
     } else {
         //TODOLANG
@@ -419,14 +412,6 @@ public func TauSettingsController(context: any AccountContextProtocol) -> InputD
         case .remove:
             showTauChatLockVerify(for: window, completion: {
                 TauChatLock.shared.removePasscode()
-            })
-        case .toggleBiometrics:
-            showTauChatLockVerify(for: window, completion: {
-                TauSettings.shared.update { current in
-                    var current = current
-                    current.chatLockBiometrics = !current.chatLockBiometrics
-                    return current
-                }
             })
         }
     })

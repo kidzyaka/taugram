@@ -58,7 +58,7 @@ public struct TauSettingsValues: Codable, Equatable {
     public var viewOnceInSecretChats: Bool = false
     public var showSelfDestructingOnMac: Bool = false
     public var lockedChats: [Int64] = []
-    public var chatLockBiometrics: Bool = false
+    public var touchIdChats: [Int64] = []
     public var showMessageSeconds: Bool = false
     public var hideStoriesInChatList: Bool = false
     public var appIcon: String?
@@ -81,7 +81,7 @@ public struct TauSettingsValues: Codable, Equatable {
         self.viewOnceInSecretChats = try container.decodeIfPresent(Bool.self, forKey: .viewOnceInSecretChats) ?? false
         self.showSelfDestructingOnMac = try container.decodeIfPresent(Bool.self, forKey: .showSelfDestructingOnMac) ?? false
         self.lockedChats = try container.decodeIfPresent([Int64].self, forKey: .lockedChats) ?? []
-        self.chatLockBiometrics = try container.decodeIfPresent(Bool.self, forKey: .chatLockBiometrics) ?? false
+        self.touchIdChats = try container.decodeIfPresent([Int64].self, forKey: .touchIdChats) ?? []
         self.showMessageSeconds = try container.decodeIfPresent(Bool.self, forKey: .showMessageSeconds) ?? false
         self.hideStoriesInChatList = try container.decodeIfPresent(Bool.self, forKey: .hideStoriesInChatList) ?? false
         self.appIcon = try container.decodeIfPresent(String.self, forKey: .appIcon)

@@ -105,7 +105,7 @@ public final class TauChatLock {
     private var record: TauChatLockRecord?
     private var unlocked = Set<Int64>()
     private let changesPipe = ValuePipe<Void>()
-    public var setupPasscode: ((@escaping () -> Void) -> Void)?
+    public var presentLockChat: ((PeerId) -> Void)?
 
     private init() {
         if let data = TauChatLockKeychain.read() {
@@ -123,8 +123,21 @@ public final class TauChatLock {
         return self.record != nil
     }
 
-    public var biometricsEnabled: Bool {
-        return self.hasPasscode && TauSettings.shared.current.chatLockBiometrics
+    public func usesTouchId(_ peerId: PeerId) -> Bool {
+        return self.isLockedChat(peerId) && TauSettings.shared.current.touchIdChats.contains(peerId.toInt64())
+    }
+
+    public func setTouchId(_ peerId: PeerId, enabled: Bool) {
+        let id = peerId.toInt64()
+        TauSettings.shared.update { current in
+            var current = current
+            current.touchIdChats.removeAll(where: { $0 == id })
+            if enabled {
+                current.touchIdChats.append(id)
+            }
+            return current
+        }
+        self.changesPipe.putNext(Void())
     }
 
     public func setPasscode(_ code: String) -> Bool {
@@ -151,7 +164,7 @@ public final class TauChatLock {
         TauSettings.shared.update { current in
             var current = current
             current.lockedChats = []
-            current.chatLockBiometrics = false
+            current.touchIdChats = []
             return current
         }
         self.changesPipe.putNext(Void())
@@ -208,13 +221,17 @@ public final class TauChatLock {
         return !self.unlocked.contains(peerId.toInt64())
     }
 
-    public func setLocked(_ peerId: PeerId, locked: Bool) {
+    public func setLocked(_ peerId: PeerId, locked: Bool, touchId: Bool = false) {
         let id = peerId.toInt64()
         TauSettings.shared.update { current in
             var current = current
             current.lockedChats.removeAll(where: { $0 == id })
+            current.touchIdChats.removeAll(where: { $0 == id })
             if locked {
                 current.lockedChats.append(id)
+                if touchId {
+                    current.touchIdChats.append(id)
+                }
             }
             return current
         }

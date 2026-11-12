@@ -74,7 +74,7 @@ final class TauChatLockView: View {
         biometryButton.set(handler: { [weak self] _ in
             self?.authenticateWithBiometrics()
         }, for: .Click)
-        biometryButton.isHidden = !TauChatLock.shared.biometricsEnabled
+        biometryButton.isHidden = !TauChatLock.shared.usesTouchId(peerId)
         addSubview(biometryButton)
     }
 
@@ -114,7 +114,7 @@ final class TauChatLockView: View {
 
     func focus() {
         window?.makeFirstResponder(field)
-        if TauChatLock.shared.biometricsEnabled {
+        if TauChatLock.shared.usesTouchId(peerId) {
             authenticateWithBiometrics()
         }
     }

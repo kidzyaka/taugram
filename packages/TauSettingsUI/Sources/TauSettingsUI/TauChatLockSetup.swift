@@ -3,9 +3,16 @@ import TGUIKit
 import SwiftSignalKit
 import TelegramTheme
 import TauSettings
+import Postbox
+import LocalAuthentication
 
 private let setupWidth: CGFloat = 340
 private let setupInset: CGFloat = 24
+
+private func tauTouchIdAvailable() -> Bool {
+    var error: NSError?
+    return LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
+}
 
 private final class TauChatLockSetupView: View {
     let titleView = TextView()
@@ -13,6 +20,8 @@ private final class TauChatLockSetupView: View {
     let errorView = TextView()
     let field = NSSecureTextField()
     let repeatField = NSSecureTextField()
+    //TODOLANG
+    let touchIdCheckbox = NSButton(checkboxWithTitle: "Unlock this chat with Touch ID", target: nil, action: nil)
     let saveButton = TextButton()
 
     required init(frame frameRect: NSRect) {
@@ -34,6 +43,12 @@ private final class TauChatLockSetupView: View {
             field.bezelStyle = .roundedBezel
             addSubview(field)
         }
+        touchIdCheckbox.font = .normal(.text)
+        if #available(macOS 10.14, *) {
+            touchIdCheckbox.contentTintColor = theme.colors.accent
+        }
+        touchIdCheckbox.attributedTitle = .initialize(string: touchIdCheckbox.title, color: theme.colors.text, font: .normal(.text))
+        addSubview(touchIdCheckbox)
         saveButton.set(font: .medium(.text), for: .Normal)
         saveButton.set(color: .white, for: .Normal)
         saveButton.set(background: theme.colors.accent, for: .Normal)
@@ -67,32 +82,84 @@ private final class TauChatLockSetupView: View {
         let width = frame.width - setupInset * 2
         titleView.setFrameOrigin(NSMakePoint(setupInset, setupInset))
         textView.setFrameOrigin(NSMakePoint(setupInset, titleView.frame.maxY + 8))
-        field.frame = NSMakeRect(setupInset, textView.frame.maxY + 16, width, 30)
-        repeatField.frame = NSMakeRect(setupInset, field.frame.maxY + 10, width, 30)
-        errorView.setFrameOrigin(NSMakePoint(floor((frame.width - errorView.frame.width) / 2), repeatField.frame.maxY + 8))
+        var y = textView.frame.maxY + 16
+        if !field.isHidden {
+            field.frame = NSMakeRect(setupInset, y, width, 30)
+            y = field.frame.maxY + 10
+        }
+        if !repeatField.isHidden {
+            repeatField.frame = NSMakeRect(setupInset, y, width, 30)
+            y = repeatField.frame.maxY + 10
+        }
+        if !touchIdCheckbox.isHidden {
+            touchIdCheckbox.sizeToFit()
+            touchIdCheckbox.setFrameOrigin(NSMakePoint(setupInset, y + 2))
+            y = touchIdCheckbox.frame.maxY + 10
+        }
+        errorView.setFrameOrigin(NSMakePoint(floor((frame.width - errorView.frame.width) / 2), y))
         saveButton.frame = NSMakeRect(setupInset, frame.height - setupInset - 40, width, 40)
     }
 }
 
+enum TauChatLockSetupMode {
+    case setup
+    case verify
+    case lockChat(PeerId)
+}
+
 final class TauChatLockSetupController: ModalViewController {
-    private let verifyOnly: Bool
+    private let mode: TauChatLockSetupMode
+    private let needsNewPasscode: Bool
+    private let showsTouchId: Bool
     private let completion: () -> Void
     private let titleLayout: TextViewLayout
     private let textLayout: TextViewLayout
 
-    init(verifyOnly: Bool, completion: @escaping () -> Void) {
-        self.verifyOnly = verifyOnly
+    init(mode: TauChatLockSetupMode, completion: @escaping () -> Void) {
+        self.mode = mode
         self.completion = completion
-        //TODOLANG
-        let title = verifyOnly ? "Enter Chat Lock Passcode" : "Chat Lock Passcode"
-        //TODOLANG
-        let text = verifyOnly ? "Enter your current passcode to continue." : "One passcode opens every locked chat. Taugram can't recover a forgotten passcode."
+        let title: String
+        let text: String
+        switch mode {
+        case .setup:
+            self.needsNewPasscode = true
+            self.showsTouchId = false
+            //TODOLANG
+            title = "Chat Lock Passcode"
+            //TODOLANG
+            text = "One passcode opens every locked chat. Taugram can't recover a forgotten passcode."
+        case .verify:
+            self.needsNewPasscode = false
+            self.showsTouchId = false
+            //TODOLANG
+            title = "Enter Chat Lock Passcode"
+            //TODOLANG
+            text = "Enter your current passcode to continue."
+        case .lockChat:
+            self.needsNewPasscode = !TauChatLock.shared.hasPasscode
+            self.showsTouchId = tauTouchIdAvailable()
+            //TODOLANG
+            title = "Lock Chat"
+            //TODOLANG
+            text = self.needsNewPasscode ? "Set a passcode first. One passcode opens every locked chat; Taugram can't recover a forgotten one." : "The chat will ask for your chat lock passcode each time it opens."
+        }
         self.titleLayout = TextViewLayout(.initialize(string: title, color: theme.colors.text, font: .medium(.header)))
         self.textLayout = TextViewLayout(.initialize(string: text, color: theme.colors.grayText, font: .normal(.text)))
         self.titleLayout.measure(width: setupWidth - setupInset * 2)
         self.textLayout.measure(width: setupWidth - setupInset * 2)
-        let fields: CGFloat = verifyOnly ? 30 : 30 + 10 + 30
-        let height = setupInset + titleLayout.layoutSize.height + 8 + textLayout.layoutSize.height + 16 + fields + 34 + 40 + setupInset
+        var fields: CGFloat = 0
+        switch mode {
+        case .verify:
+            fields = 30 + 10
+        default:
+            if self.needsNewPasscode {
+                fields = 30 + 10 + 30 + 10
+            }
+        }
+        if self.showsTouchId {
+            fields += 22 + 10
+        }
+        let height = setupInset + titleLayout.layoutSize.height + 8 + textLayout.layoutSize.height + 16 + fields + 24 + 40 + setupInset
         super.init(frame: NSMakeRect(0, 0, setupWidth, height))
         bar = .init(height: 0)
     }
@@ -105,14 +172,29 @@ final class TauChatLockSetupController: ModalViewController {
         return self.view as! TauChatLockSetupView
     }
 
+    private var isVerify: Bool {
+        if case .verify = mode {
+            return true
+        }
+        return false
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        genericView.repeatField.isHidden = verifyOnly
-        if verifyOnly {
+        genericView.field.isHidden = !needsNewPasscode && !isVerify
+        genericView.repeatField.isHidden = !needsNewPasscode
+        genericView.touchIdCheckbox.isHidden = !showsTouchId
+        switch mode {
+        case .verify:
             //TODOLANG
             genericView.field.placeholderString = "Passcode"
             //TODOLANG
             genericView.saveButton.set(text: "Continue", for: .Normal)
+        case .lockChat:
+            //TODOLANG
+            genericView.saveButton.set(text: "Lock", for: .Normal)
+        case .setup:
+            break
         }
         genericView.titleView.update(titleLayout)
         genericView.textView.update(textLayout)
@@ -123,11 +205,14 @@ final class TauChatLockSetupController: ModalViewController {
     }
 
     override func firstResponder() -> NSResponder? {
+        if genericView.field.isHidden {
+            return genericView.saveButton
+        }
         return genericView.field
     }
 
     override func returnKeyAction() -> KeyHandlerResult {
-        if !verifyOnly, window?.firstResponder == genericView.field.currentEditor() {
+        if needsNewPasscode, window?.firstResponder == genericView.field.currentEditor() {
             window?.makeFirstResponder(genericView.repeatField)
         } else {
             save()
@@ -165,9 +250,21 @@ final class TauChatLockSetupController: ModalViewController {
         }
     }
 
+    private func finish() {
+        if case let .lockChat(peerId) = mode {
+            TauChatLock.shared.setLocked(peerId, locked: true, touchId: showsTouchId && genericView.touchIdCheckbox.state == .on)
+        }
+        close()
+        completion()
+    }
+
     private func save() {
-        if verifyOnly {
+        if isVerify {
             verify()
+            return
+        }
+        guard needsNewPasscode else {
+            finish()
             return
         }
         let code = genericView.field.stringValue
@@ -191,8 +288,7 @@ final class TauChatLockSetupController: ModalViewController {
                 }
                 self.genericView.saveButton.isEnabled = true
                 if saved {
-                    self.close()
-                    self.completion()
+                    self.finish()
                 } else {
                     //TODOLANG
                     self.genericView.showError("Couldn't save the passcode to Keychain")
@@ -203,21 +299,21 @@ final class TauChatLockSetupController: ModalViewController {
 }
 
 public func showTauChatLockSetup(for window: Window, completion: @escaping () -> Void = {}) {
-    showModal(with: TauChatLockSetupController(verifyOnly: false, completion: completion), for: window)
+    showModal(with: TauChatLockSetupController(mode: .setup, completion: completion), for: window)
 }
 
 func showTauChatLockVerify(for window: Window, completion: @escaping () -> Void) {
-    showModal(with: TauChatLockSetupController(verifyOnly: true, completion: completion), for: window)
+    showModal(with: TauChatLockSetupController(mode: .verify, completion: completion), for: window)
 }
 
 private var tauChatLockObservers: [NSObjectProtocol] = []
 
 public func installTauChatLock(window: Window) {
-    TauChatLock.shared.setupPasscode = { [weak window] completion in
+    TauChatLock.shared.presentLockChat = { [weak window] peerId in
         guard let window else {
             return
         }
-        showTauChatLockSetup(for: window, completion: completion)
+        showModal(with: TauChatLockSetupController(mode: .lockChat(peerId), completion: {}), for: window)
     }
     guard tauChatLockObservers.isEmpty else {
         return

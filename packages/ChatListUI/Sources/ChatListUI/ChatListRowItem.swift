@@ -2359,8 +2359,8 @@ public class ChatListRowItem: TableRowItem {
                     previewChat()
                 }, itemImage: MenuAnimation.menu_eye.value))
             }
-            if let peerId, !mode.savedMessages, let item = tauChatLockMenuItem(context: context, peerId: peerId) { // Taugram
-                firstGroup.append(item) // Taugram
+            if let peerId, !mode.savedMessages { // Taugram
+                firstGroup.append(contentsOf: tauChatLockMenuItems(context: context, peerId: peerId)) // Taugram
             } // Taugram
             
             var submenu: [ContextMenuItem] = []

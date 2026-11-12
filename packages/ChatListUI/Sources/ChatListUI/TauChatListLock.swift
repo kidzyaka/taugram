@@ -16,31 +16,37 @@ func tauLockedChatText() -> NSAttributedString {
     return attr
 }
 
-func tauChatLockMenuItem(context: any AccountContextProtocol, peerId: PeerId) -> ContextMenuItem? {
+func tauChatLockMenuItems(context: any AccountContextProtocol, peerId: PeerId) -> [ContextMenuItem] {
     if peerId == context.peerId {
-        return nil
+        return []
     }
     let lock = TauChatLock.shared
-    if lock.isLockedChat(peerId) {
+    guard lock.isLockedChat(peerId) else {
         //TODOLANG
-        return ContextMenuItem("Remove Chat Lock", handler: {
-            if lock.needsUnlock(peerId) {
-                //TODOLANG
-                alert(for: context.window, info: "Open the chat and unlock it with your passcode first.")
-            } else {
-                lock.setLocked(peerId, locked: false)
-            }
-        }, itemImage: MenuAnimation.menu_unlock.value)
-    } else {
-        //TODOLANG
-        return ContextMenuItem("Lock Chat", handler: {
-            if lock.hasPasscode {
-                lock.setLocked(peerId, locked: true)
-            } else {
-                lock.setupPasscode?({
-                    lock.setLocked(peerId, locked: true)
-                })
-            }
-        }, itemImage: MenuAnimation.menu_lock.value)
+        return [ContextMenuItem("Lock Chat", handler: {
+            lock.presentLockChat?(peerId)
+        }, itemImage: MenuAnimation.menu_lock.value)]
     }
+    let requireUnlocked: (@escaping () -> Void) -> Void = { action in
+        if lock.needsUnlock(peerId) {
+            //TODOLANG
+            alert(for: context.window, info: "Open the chat and unlock it with your passcode first.")
+        } else {
+            action()
+        }
+    }
+    let usesTouchId = lock.usesTouchId(peerId)
+    //TODOLANG
+    let touchIdItem = ContextMenuItem("Unlock with Touch ID", handler: {
+        requireUnlocked {
+            lock.setTouchId(peerId, enabled: !usesTouchId)
+        }
+    }, state: usesTouchId ? .on : .off)
+    //TODOLANG
+    let removeItem = ContextMenuItem("Remove Chat Lock", handler: {
+        requireUnlocked {
+            lock.setLocked(peerId, locked: false)
+        }
+    }, itemImage: MenuAnimation.menu_unlock.value)
+    return [touchIdItem, removeItem]
 }
