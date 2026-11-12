@@ -12,6 +12,7 @@ func installTaugramSettingsHooks(_ hooks: inout SettingsNavigationHooks) {
     }
     DispatchQueue.main.async {
         TauAppIconManager.applyStored()
+        installTauGhostMenuItem()
     }
     hooks.taugram = SettingsTaugramEntry(icon: {
         return tauSettingsIcon

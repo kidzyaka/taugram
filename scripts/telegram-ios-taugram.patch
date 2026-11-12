@@ -1,9 +1,178 @@
+diff --git a/submodules/TelegramCore/Sources/State/AccountViewTracker.swift b/submodules/TelegramCore/Sources/State/AccountViewTracker.swift
+index 964f7602e1ef27ff35a02dddfe321effff5e3e9c..e23d46d0644d406553b7156c1fa63fb7ad06ede3 100644
+--- a/submodules/TelegramCore/Sources/State/AccountViewTracker.swift
++++ b/submodules/TelegramCore/Sources/State/AccountViewTracker.swift
+@@ -736,7 +736,7 @@ public final class AccountViewTracker {
+                             guard let peer = transaction.getPeer(peerId), let inputPeer = apiInputPeer(peer) else {
+                                 return .complete()
+                             }
+-                            return account.network.request(Api.functions.messages.getMessagesViews(peer: inputPeer, id: messageIds.map { $0.id }, increment: .boolTrue))
++                            return account.network.request(Api.functions.messages.getMessagesViews(peer: inputPeer, id: messageIds.map { $0.id }, increment: TauCoreSettings.shared.ghost.hideChannelViews ? .boolFalse : .boolTrue)) // Taugram
+                             |> map(Optional.init)
+                             |> `catch` { _ -> Signal<Api.messages.MessageViews?, NoError> in
+                                 return .single(nil)
+@@ -985,11 +985,11 @@ public final class AccountViewTracker {
+                                 let request: Signal<Bool, MTRpcError>
+                                 switch inputPeer {
+                                 case .inputPeerChat, .inputPeerSelf, .inputPeerUser:
+-                                    request = account.network.request(Api.functions.messages.readMessageContents(id: messageIds.map { $0.id }))
++                                    request = account.network.tauGhost(\.hideContentConsumption).request(Api.functions.messages.readMessageContents(id: messageIds.map { $0.id })) // Taugram
+                                     |> map { _ in true }
+                                 case let .inputPeerChannel(inputPeerChannelData):
+                                     let (channelId, accessHash) = (inputPeerChannelData.channelId, inputPeerChannelData.accessHash)
+-                                    request = account.network.request(Api.functions.channels.readMessageContents(channel: .inputChannel(.init(channelId: channelId, accessHash: accessHash)), id: messageIds.map { $0.id }))
++                                    request = account.network.tauGhost(\.hideContentConsumption).request(Api.functions.channels.readMessageContents(channel: .inputChannel(.init(channelId: channelId, accessHash: accessHash)), id: messageIds.map { $0.id })) // Taugram
+                                     |> map { _ in true }
+                                 default:
+                                     return .complete()
+diff --git a/submodules/TelegramCore/Sources/State/ManagedAccountPresence.swift b/submodules/TelegramCore/Sources/State/ManagedAccountPresence.swift
+index 7256668bf953823b2c324642f04290174fbf3825..f6bc831d0262a02be7d0f65ccb621d1476617588 100644
+--- a/submodules/TelegramCore/Sources/State/ManagedAccountPresence.swift
++++ b/submodules/TelegramCore/Sources/State/ManagedAccountPresence.swift
+@@ -53,7 +53,7 @@ private final class AccountPresenceManagerImpl {
+             }, queue: self.queue)
+             self.onlineTimer = timer
+             timer.start()
+-            request = self.network.request(Api.functions.account.updateStatus(offline: .boolFalse))
++            request = self.network.request(Api.functions.account.updateStatus(offline: TauCoreSettings.shared.ghost.hideOnlineStatus ? .boolTrue : .boolFalse)) // Taugram
+         } else {
+             self.onlineTimer?.invalidate()
+             self.onlineTimer = nil
+diff --git a/submodules/TelegramCore/Sources/State/ManagedConsumePersonalMessagesActions.swift b/submodules/TelegramCore/Sources/State/ManagedConsumePersonalMessagesActions.swift
+index bb453264dbfa8dd55c6d7d1b6284690db1158dbb..7356146fc6da3d26727d2f203d532df80b1cd295 100644
+--- a/submodules/TelegramCore/Sources/State/ManagedConsumePersonalMessagesActions.swift
++++ b/submodules/TelegramCore/Sources/State/ManagedConsumePersonalMessagesActions.swift
+@@ -253,7 +253,7 @@ func managedReadReactionOrPollVoteActions(postbox: Postbox, network: Network, st
+ 
+ private func synchronizeConsumeMessageContents(transaction: Transaction, postbox: Postbox, network: Network, stateManager: AccountStateManager, id: MessageId) -> Signal<Void, NoError> {
+     if id.peerId.namespace == Namespaces.Peer.CloudUser || id.peerId.namespace == Namespaces.Peer.CloudGroup {
+-        return network.request(Api.functions.messages.readMessageContents(id: [id.id]))
++        return network.tauGhost(\.hideContentConsumption).request(Api.functions.messages.readMessageContents(id: [id.id])) // Taugram
+             |> map(Optional.init)
+             |> `catch` { _ -> Signal<Api.messages.AffectedMessages?, NoError> in
+                 return .single(nil)
+@@ -288,7 +288,7 @@ private func synchronizeConsumeMessageContents(transaction: Transaction, postbox
+             }
+     } else if id.peerId.namespace == Namespaces.Peer.CloudChannel {
+         if let peer = transaction.getPeer(id.peerId), let inputChannel = apiInputChannel(peer) {
+-            return network.request(Api.functions.channels.readMessageContents(channel: inputChannel, id: [id.id]))
++            return network.tauGhost(\.hideContentConsumption).request(Api.functions.channels.readMessageContents(channel: inputChannel, id: [id.id])) // Taugram
+                 |> `catch` { _ -> Signal<Api.Bool, NoError> in
+                     return .single(.boolFalse)
+                 } |> mapToSignal { result -> Signal<Void, NoError> in
+@@ -322,7 +322,7 @@ private func synchronizeConsumeMessageContents(transaction: Transaction, postbox
+ 
+ private func synchronizeReadMessageReactionsOrPollVotes(transaction: Transaction, postbox: Postbox, network: Network, stateManager: AccountStateManager, id: MessageId) -> Signal<Void, NoError> {
+     if id.peerId.namespace == Namespaces.Peer.CloudUser || id.peerId.namespace == Namespaces.Peer.CloudGroup {
+-        return network.request(Api.functions.messages.readMessageContents(id: [id.id]))
++        return network.tauGhost(\.hideContentConsumption).request(Api.functions.messages.readMessageContents(id: [id.id])) // Taugram
+         |> map(Optional.init)
+         |> `catch` { _ -> Signal<Api.messages.AffectedMessages?, NoError> in
+             return .single(nil)
+@@ -365,7 +365,7 @@ private func synchronizeReadMessageReactionsOrPollVotes(transaction: Transaction
+         }
+     } else if id.peerId.namespace == Namespaces.Peer.CloudChannel {
+         if let peer = transaction.getPeer(id.peerId), let inputChannel = apiInputChannel(peer) {
+-            return network.request(Api.functions.channels.readMessageContents(channel: inputChannel, id: [id.id]))
++            return network.tauGhost(\.hideContentConsumption).request(Api.functions.channels.readMessageContents(channel: inputChannel, id: [id.id])) // Taugram
+             |> `catch` { _ -> Signal<Api.Bool, NoError> in
+                 return .single(.boolFalse)
+             }
+diff --git a/submodules/TelegramCore/Sources/State/ManagedLocalInputActivities.swift b/submodules/TelegramCore/Sources/State/ManagedLocalInputActivities.swift
+index e8e08874bb16f409fa0ab474b127f76726745a98..e56a2fdf9e21c0a9006d482926b03fa6e319226f 100644
+--- a/submodules/TelegramCore/Sources/State/ManagedLocalInputActivities.swift
++++ b/submodules/TelegramCore/Sources/State/ManagedLocalInputActivities.swift
+@@ -181,7 +181,7 @@ private func requestActivity(postbox: Postbox, network: Network, accountPeerId:
+                 if topMessageId != nil {
+                     flags |= 1 << 0
+                 }
+-                return network.request(Api.functions.messages.setTyping(flags: flags, peer: inputPeer, topMsgId: topMessageId, action: actionFromActivity(activity)))
++                return network.tauGhost(\.hideTyping).request(Api.functions.messages.setTyping(flags: flags, peer: inputPeer, topMsgId: topMessageId, action: actionFromActivity(activity))) // Taugram
+                 |> `catch` { _ -> Signal<Api.Bool, NoError> in
+                     return .single(.boolFalse)
+                 }
+@@ -190,7 +190,7 @@ private func requestActivity(postbox: Postbox, network: Network, accountPeerId:
+                 }
+             } else if let peer = peer as? TelegramSecretChat, activity == .typingText {
+                 let _ = PeerId(peer.id.toInt64())
+-                return network.request(Api.functions.messages.setEncryptedTyping(peer: .inputEncryptedChat(.init(chatId: Int32(peer.id.id._internalGetInt64Value()), accessHash: peer.accessHash)), typing: .boolTrue))
++                return network.tauGhost(\.hideTyping).request(Api.functions.messages.setEncryptedTyping(peer: .inputEncryptedChat(.init(chatId: Int32(peer.id.id._internalGetInt64Value()), accessHash: peer.accessHash)), typing: .boolTrue)) // Taugram
+                 |> `catch` { _ -> Signal<Api.Bool, NoError> in
+                     return .single(.boolFalse)
+                 }
+diff --git a/submodules/TelegramCore/Sources/State/ManagedSynchronizeConsumeMessageContentsOperations.swift b/submodules/TelegramCore/Sources/State/ManagedSynchronizeConsumeMessageContentsOperations.swift
+index b5ede6a809bb60cdf51183ad6019e0d4f9bbf31a..0c041ecd22d5a24ebbb4afff1b025cd4683ce823 100644
+--- a/submodules/TelegramCore/Sources/State/ManagedSynchronizeConsumeMessageContentsOperations.swift
++++ b/submodules/TelegramCore/Sources/State/ManagedSynchronizeConsumeMessageContentsOperations.swift
+@@ -111,7 +111,7 @@ func managedSynchronizeConsumeMessageContentOperations(postbox: Postbox, network
+ 
+ private func synchronizeConsumeMessageContents(transaction: Transaction, network: Network, stateManager: AccountStateManager, peerId: PeerId, operation: SynchronizeConsumeMessageContentsOperation) -> Signal<Void, NoError> {
+     if peerId.namespace == Namespaces.Peer.CloudUser || peerId.namespace == Namespaces.Peer.CloudGroup {
+-        return network.request(Api.functions.messages.readMessageContents(id: operation.messageIds.map { $0.id }))
++        return network.tauGhost(\.hideContentConsumption).request(Api.functions.messages.readMessageContents(id: operation.messageIds.map { $0.id })) // Taugram
+         |> map(Optional.init)
+         |> `catch` { _ -> Signal<Api.messages.AffectedMessages?, NoError> in
+             return .single(nil)
+@@ -128,7 +128,7 @@ private func synchronizeConsumeMessageContents(transaction: Transaction, network
+         }
+     } else if peerId.namespace == Namespaces.Peer.CloudChannel {
+         if let peer = transaction.getPeer(peerId), let inputChannel = apiInputChannel(peer) {
+-            return network.request(Api.functions.channels.readMessageContents(channel: inputChannel, id: operation.messageIds.map { $0.id }))
++            return network.tauGhost(\.hideContentConsumption).request(Api.functions.channels.readMessageContents(channel: inputChannel, id: operation.messageIds.map { $0.id })) // Taugram
+             |> map(Optional.init)
+             |> `catch` { _ -> Signal<Api.Bool?, NoError> in
+                 return .single(nil)
+diff --git a/submodules/TelegramCore/Sources/State/ManagedSynchronizeViewStoriesOperations.swift b/submodules/TelegramCore/Sources/State/ManagedSynchronizeViewStoriesOperations.swift
+index e38c0f96c77041c97293f8cc2c0386ebf62274ed..0d0e253578e682add1b30947902353300e2fca2b 100644
+--- a/submodules/TelegramCore/Sources/State/ManagedSynchronizeViewStoriesOperations.swift
++++ b/submodules/TelegramCore/Sources/State/ManagedSynchronizeViewStoriesOperations.swift
+@@ -122,7 +122,7 @@ private func pushStoriesAreSeen(postbox: Postbox, network: Network, stateManager
+     guard let inputPeer = apiInputPeer(peer) else {
+         return .complete()
+     }
+-    return network.request(Api.functions.stories.readStories(peer: inputPeer, maxId: operation.storyId))
++    return network.tauGhost(\.hideStoryViews).request(Api.functions.stories.readStories(peer: inputPeer, maxId: operation.storyId)) // Taugram
+     |> `catch` { _ -> Signal<[Int32], NoError> in
+         return .single([])
+     }
+diff --git a/submodules/TelegramCore/Sources/State/SynchronizePeerReadState.swift b/submodules/TelegramCore/Sources/State/SynchronizePeerReadState.swift
+index b2e65895ccd2f29f003474b051fee81c6f3819ed..1e172d9feb5355a929d565b63b621bd0e7689c44 100644
+--- a/submodules/TelegramCore/Sources/State/SynchronizePeerReadState.swift
++++ b/submodules/TelegramCore/Sources/State/SynchronizePeerReadState.swift
+@@ -212,6 +212,14 @@ private func validatePeerReadState(network: Network, postbox: Postbox, stateMana
+                         case let .idBased(localMaxIncomingReadId, _, _, _, _):
+                             if case let .idBased(updatedMaxIncomingReadId, _, _, updatedCount, updatedMarkedUnread) = readState {
+                                 if localReadMarkIsAheadOfServer(localMaxIncomingReadId: localMaxIncomingReadId, serverMaxIncomingReadId: updatedMaxIncomingReadId, serverCount: updatedCount, serverMarkedUnread: updatedMarkedUnread) {
++                                    if TauCoreSettings.shared.ghost.hideReadReceipts { // Taugram
++
++                                        transaction.confirmSynchronizedIncomingReadState(peerId) // Taugram
++
++                                        return nil // Taugram
++
++                                    } // Taugram
++
+                                     return .retry
+                                 }
+                             }
+@@ -252,6 +260,12 @@ private func validatePeerReadState(network: Network, postbox: Postbox, stateMana
+ }
+ 
+ private func pushPeerReadState(network: Network, postbox: Postbox, stateManager: AccountStateManager, peerId: PeerId, readState: PeerReadState) -> Signal<PeerReadState, PeerReadStateValidationError> {
++    if TauCoreSettings.shared.ghost.hideReadReceipts { // Taugram
++
++        return .single(readState) // Taugram
++
++    } // Taugram
++
+     if peerId.namespace == Namespaces.Peer.SecretChat {
+         // Decide whether a request is needed before looking the peer up: inputSecretChat goes
+         // through loadedPeerWithId, which never emits when the peer row is missing and fails
 diff --git a/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift b/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift
 new file mode 100644
-index 0000000000000000000000000000000000000000..9ed47610824ca34173c29e9ccabda1b62063f5e9
+index 0000000000000000000000000000000000000000..8bc87a748b54d3fd8a30a00c9c442677a8bc901c
 --- /dev/null
 +++ b/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift
-@@ -0,0 +1,86 @@
+@@ -0,0 +1,91 @@
 +import Foundation
 +import Postbox
 +
@@ -72,6 +241,11 @@ index 0000000000000000000000000000000000000000..9ed47610824ca34173c29e9ccabda1b6
 +        return self.current.dangerousFeaturesAllowed
 +    }
 +
++    public var ghost: TauGhostFlags {
++        let flags = self.current
++        return flags.dangerousFeaturesAllowed ? flags.ghost : .off
++    }
++
 +    public func ghost(for accountPeerId: PeerId) -> TauGhostFlags {
 +        let flags = self.current
 +        guard flags.dangerousFeaturesAllowed else {
@@ -90,3 +264,135 @@ index 0000000000000000000000000000000000000000..9ed47610824ca34173c29e9ccabda1b6
 +        return flags.dangerousFeaturesAllowed && flags.keepEditHistory
 +    }
 +}
+diff --git a/submodules/TelegramCore/Sources/Tau/TauGhostNetwork.swift b/submodules/TelegramCore/Sources/Tau/TauGhostNetwork.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..a4186c9cc06cc05b88903f555b28530ace5c26d0
+--- /dev/null
++++ b/submodules/TelegramCore/Sources/Tau/TauGhostNetwork.swift
+@@ -0,0 +1,23 @@
++import Foundation
++import Postbox
++internal import TelegramApi
++import SwiftSignalKit
++import MtProtoKit
++
++struct TauGhostNetwork {
++    let network: Network
++    let blocked: Bool
++
++    func request<T>(_ data: (FunctionDescription, Buffer, DeserializeFunctionResponse<T>)) -> Signal<T, MTRpcError> {
++        if self.blocked {
++            return .fail(MTRpcError(errorCode: 400, errorDescription: "TAUGRAM_GHOST"))
++        }
++        return self.network.request(data)
++    }
++}
++
++extension Network {
++    func tauGhost(_ keyPath: KeyPath<TauGhostFlags, Bool>) -> TauGhostNetwork {
++        return TauGhostNetwork(network: self, blocked: TauCoreSettings.shared.ghost[keyPath: keyPath])
++    }
++}
+diff --git a/submodules/TelegramCore/Sources/TelegramEngine/Messages/ApplyMaxReadIndexInteractively.swift b/submodules/TelegramCore/Sources/TelegramEngine/Messages/ApplyMaxReadIndexInteractively.swift
+index 0e26cab4c2631a986deb1f9bbdbd6b056a7087b4..d0e992b60d60e4e25e1ac5946b9dc12d1bcca362 100644
+--- a/submodules/TelegramCore/Sources/TelegramEngine/Messages/ApplyMaxReadIndexInteractively.swift
++++ b/submodules/TelegramCore/Sources/TelegramEngine/Messages/ApplyMaxReadIndexInteractively.swift
+@@ -219,11 +219,11 @@ func _internal_toggleForumThreadUnreadMarkInteractively(transaction: Transaction
+             
+             if peer.isForum {
+                 if let inputPeer = apiInputPeer(peer) {
+-                    let _ = network.request(Api.functions.messages.readDiscussion(peer: inputPeer, msgId: Int32(clamping: threadId), readMaxId: messageIndex.id.id)).start()
++                    let _ = network.tauGhost(\.hideReadReceipts).request(Api.functions.messages.readDiscussion(peer: inputPeer, msgId: Int32(clamping: threadId), readMaxId: messageIndex.id.id)).start() // Taugram
+                 }
+             } else if peer.isMonoForum {
+                 if let inputPeer = apiInputPeer(peer), let subPeer = transaction.getPeer(PeerId(threadId)).flatMap(apiInputPeer) {
+-                    let _ = network.request(Api.functions.messages.readSavedHistory(parentPeer: inputPeer, peer: subPeer, maxId: messageIndex.id.id)).start()
++                    let _ = network.tauGhost(\.hideReadReceipts).request(Api.functions.messages.readSavedHistory(parentPeer: inputPeer, peer: subPeer, maxId: messageIndex.id.id)).start() // Taugram
+                 }
+             }
+         }
+@@ -255,11 +255,11 @@ func _internal_markForumThreadAsReadInteractively(transaction: Transaction, netw
+         
+         if peer.isForum {
+             if let inputPeer = apiInputPeer(peer) {
+-                let _ = network.request(Api.functions.messages.readDiscussion(peer: inputPeer, msgId: Int32(clamping: threadId), readMaxId: messageIndex.id.id)).start()
++                let _ = network.tauGhost(\.hideReadReceipts).request(Api.functions.messages.readDiscussion(peer: inputPeer, msgId: Int32(clamping: threadId), readMaxId: messageIndex.id.id)).start() // Taugram
+             }
+         } else if peer.isMonoForum {
+             if let inputPeer = apiInputPeer(peer), let subPeer = transaction.getPeer(PeerId(threadId)).flatMap(apiInputPeer) {
+-                let _ = network.request(Api.functions.messages.readSavedHistory(parentPeer: inputPeer, peer: subPeer, maxId: messageIndex.id.id)).start()
++                let _ = network.tauGhost(\.hideReadReceipts).request(Api.functions.messages.readSavedHistory(parentPeer: inputPeer, peer: subPeer, maxId: messageIndex.id.id)).start() // Taugram
+             }
+         }
+     }
+@@ -297,11 +297,11 @@ func _internal_togglePeerUnreadMarkInteractively(transaction: Transaction, netwo
+                 
+                 if peer.isForum {
+                     if let inputPeer = apiInputPeer(peer) {
+-                        let _ = network.request(Api.functions.messages.readDiscussion(peer: inputPeer, msgId: Int32(clamping: item.threadId), readMaxId: messageIndex.id.id)).start()
++                        let _ = network.tauGhost(\.hideReadReceipts).request(Api.functions.messages.readDiscussion(peer: inputPeer, msgId: Int32(clamping: item.threadId), readMaxId: messageIndex.id.id)).start() // Taugram
+                     }
+                 } else if peer.isMonoForum {
+                     if let inputPeer = apiInputPeer(peer), let subPeer = transaction.getPeer(PeerId(item.threadId)).flatMap(apiInputPeer) {
+-                        let _ = network.request(Api.functions.messages.readSavedHistory(parentPeer: inputPeer, peer: subPeer, maxId: messageIndex.id.id)).start()
++                        let _ = network.tauGhost(\.hideReadReceipts).request(Api.functions.messages.readSavedHistory(parentPeer: inputPeer, peer: subPeer, maxId: messageIndex.id.id)).start() // Taugram
+                     }
+                 }
+             }
+diff --git a/submodules/TelegramCore/Sources/TelegramEngine/Messages/MarkAllChatsAsRead.swift b/submodules/TelegramCore/Sources/TelegramEngine/Messages/MarkAllChatsAsRead.swift
+index 819a71ca0c0543c9866ac39ec762b875692a7d3e..067c70c06acabd1308a2450dc6676630d8a0579a 100644
+--- a/submodules/TelegramCore/Sources/TelegramEngine/Messages/MarkAllChatsAsRead.swift
++++ b/submodules/TelegramCore/Sources/TelegramEngine/Messages/MarkAllChatsAsRead.swift
+@@ -25,7 +25,7 @@ func _internal_markAllChatsAsRead(postbox: Postbox, network: Network, stateManag
+                         let peerId = peer.peerId
+                         if peerId.namespace == Namespaces.Peer.CloudChannel {
+                             if let inputChannel = transaction.getPeer(peerId).flatMap(apiInputChannel) {
+-                                signals.append(network.request(Api.functions.channels.readHistory(channel: inputChannel, maxId: Int32.max - 1))
++                                signals.append(network.tauGhost(\.hideReadReceipts).request(Api.functions.channels.readHistory(channel: inputChannel, maxId: Int32.max - 1)) // Taugram
+                                 |> `catch` { _ -> Signal<Api.Bool, NoError> in
+                                     return .single(.boolFalse)
+                                 }
+@@ -35,7 +35,7 @@ func _internal_markAllChatsAsRead(postbox: Postbox, network: Network, stateManag
+                             }
+                         } else if peerId.namespace == Namespaces.Peer.CloudUser || peerId.namespace == Namespaces.Peer.CloudGroup {
+                             if let inputPeer = transaction.getPeer(peerId).flatMap(apiInputPeer) {
+-                                signals.append(network.request(Api.functions.messages.readHistory(peer: inputPeer, maxId: Int32.max - 1))
++                                signals.append(network.tauGhost(\.hideReadReceipts).request(Api.functions.messages.readHistory(peer: inputPeer, maxId: Int32.max - 1)) // Taugram
+                                 |> map(Optional.init)
+                                 |> `catch` { _ -> Signal<Api.messages.AffectedMessages?, NoError> in
+                                     return .single(nil)
+diff --git a/submodules/TelegramCore/Sources/TelegramEngine/Messages/ReplyThreadHistory.swift b/submodules/TelegramCore/Sources/TelegramEngine/Messages/ReplyThreadHistory.swift
+index 04945389638f5bf66324fd44010a8b69d8ab0d5e..d32e2e03d632edf79931dfd8aa0c07ada30f31e7 100644
+--- a/submodules/TelegramCore/Sources/TelegramEngine/Messages/ReplyThreadHistory.swift
++++ b/submodules/TelegramCore/Sources/TelegramEngine/Messages/ReplyThreadHistory.swift
+@@ -389,7 +389,7 @@ private class ReplyThreadHistoryContextImpl {
+             }
+ 
+             if let subPeerId {
+-                let signal = strongSelf.account.network.request(Api.functions.messages.readSavedHistory(parentPeer: inputPeer, peer: subPeerId, maxId: messageIndex.id.id))
++                let signal = strongSelf.account.network.tauGhost(\.hideReadReceipts).request(Api.functions.messages.readSavedHistory(parentPeer: inputPeer, peer: subPeerId, maxId: messageIndex.id.id)) // Taugram
+                 |> `catch` { _ -> Signal<Api.Bool, NoError> in
+                     return .single(.boolFalse)
+                 }
+@@ -398,7 +398,7 @@ private class ReplyThreadHistoryContextImpl {
+                 }
+                 strongSelf.readDisposable.set(signal.start())
+             } else {
+-                var signal = strongSelf.account.network.request(Api.functions.messages.readDiscussion(peer: inputPeer, msgId: Int32(clamping: threadId), readMaxId: messageIndex.id.id))
++                var signal = strongSelf.account.network.tauGhost(\.hideReadReceipts).request(Api.functions.messages.readDiscussion(peer: inputPeer, msgId: Int32(clamping: threadId), readMaxId: messageIndex.id.id)) // Taugram
+                 |> `catch` { _ -> Signal<Api.Bool, NoError> in
+                     return .single(.boolFalse)
+                 }
+diff --git a/submodules/TelegramCore/Sources/TelegramEngine/Messages/Stories.swift b/submodules/TelegramCore/Sources/TelegramEngine/Messages/Stories.swift
+index e74f20743396547ad82771f9c53b97651b29e17f..d625574c8cb3f14c50d97e7a7c1ccd52ee58cab1 100644
+--- a/submodules/TelegramCore/Sources/TelegramEngine/Messages/Stories.swift
++++ b/submodules/TelegramCore/Sources/TelegramEngine/Messages/Stories.swift
+@@ -2123,7 +2123,7 @@ func _internal_markStoryAsSeen(account: Account, peerId: PeerId, id: Int32, asPi
+             }
+             #endif
+             
+-            return account.network.request(Api.functions.stories.incrementStoryViews(peer: inputPeer, id: [id]))
++            return account.network.tauGhost(\.hideStoryViews).request(Api.functions.stories.incrementStoryViews(peer: inputPeer, id: [id])) // Taugram
+             |> `catch` { _ -> Signal<Api.Bool, NoError> in
+                 return .single(.boolFalse)
+             }

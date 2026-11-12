@@ -18,7 +18,8 @@ private final class Arguments {
     let toggleHideStories: () -> Void
     let togglePeerId: () -> Void
     let toggleOLED: () -> Void
-    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void) {
+    let toggleGhost: (WritableKeyPath<TauGhostSettings, Bool>?) -> Void
+    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void) {
         self.toggleDangerousFeatures = toggleDangerousFeatures
         self.reviewConsent = reviewConsent
         self.selectAppIcon = selectAppIcon
@@ -26,6 +27,7 @@ private final class Arguments {
         self.toggleHideStories = toggleHideStories
         self.togglePeerId = togglePeerId
         self.toggleOLED = toggleOLED
+        self.toggleGhost = toggleGhost
     }
 }
 
@@ -50,6 +52,29 @@ private let _id_message_seconds = InputDataIdentifier("_id_message_seconds")
 private let _id_hide_stories = InputDataIdentifier("_id_hide_stories")
 private let _id_peer_id = InputDataIdentifier("_id_peer_id")
 private let _id_oled = InputDataIdentifier("_id_oled")
+private let _id_ghost_all = InputDataIdentifier("_id_ghost_all")
+private func _id_ghost(_ key: String) -> InputDataIdentifier {
+    return InputDataIdentifier("_id_ghost_\(key)")
+}
+
+private let ghostOptions: [(key: String, title: String, keyPath: WritableKeyPath<TauGhostSettings, Bool>)] = [
+    //TODOLANG
+    ("read", "Don't Send Read Receipts", \.hideReadReceipts),
+    //TODOLANG
+    ("online", "Don't Show Online", \.hideOnlineStatus),
+    //TODOLANG
+    ("typing", "Don't Send Typing", \.hideTyping),
+    //TODOLANG
+    ("stories", "Don't Mark Stories Seen", \.hideStoryViews),
+    //TODOLANG
+    ("consume", "Don't Mark Voice and Mentions Seen", \.hideContentConsumption),
+    //TODOLANG
+    ("views", "Don't Count Channel Views", \.hideChannelViews),
+]
+
+func tauGhostModeIsOn(_ ghost: TauGhostSettings) -> Bool {
+    return ghostOptions.allSatisfy { ghost[keyPath: $0.keyPath] }
+}
 private func _id_app_icon(_ icon: TauAppIcon) -> InputDataIdentifier {
     return InputDataIdentifier("_id_app_icon_\(icon.rawValue)")
 }
@@ -151,6 +176,32 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
         //TODOLANG
         entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Turning this off stops every dangerous feature at once. Each feature still has its own switch."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
         index += 1
+
+        if state.values.dangerousFeaturesEnabled {
+            entries.append(.sectionId(sectionId, type: .normal))
+            sectionId += 1
+
+            //TODOLANG
+            entries.append(.desc(sectionId: sectionId, index: index, text: .plain("GHOST MODE"), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+            index += 1
+
+            //TODOLANG
+            entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_ghost_all, data: .init(name: "Ghost Mode", color: theme.colors.text, type: .switchable(tauGhostModeIsOn(state.values.ghost)), viewType: .firstItem, action: {
+                arguments.toggleGhost(nil)
+            })))
+            index += 1
+
+            for (i, option) in ghostOptions.enumerated() {
+                entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_ghost(option.key), data: .init(name: option.title, color: theme.colors.text, type: .switchable(state.values.ghost[keyPath: option.keyPath]), viewType: i == ghostOptions.count - 1 ? .lastItem : .innerItem, action: {
+                    arguments.toggleGhost(option.keyPath)
+                })))
+                index += 1
+            }
+
+            //TODOLANG
+            entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Sending a message still shows you online for a moment; Taugram sets you offline again within 30 seconds. Reacting to or replying to a story marks it seen. Toggle Ghost Mode quickly with ⌥⌘G."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+            index += 1
+        }
     } else {
         //TODOLANG
         entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_dangerous_review, data: .init(name: "Review Decision", color: theme.colors.accent, type: .none, viewType: .singleItem, action: arguments.reviewConsent)))
@@ -222,6 +273,16 @@ public func TauSettingsController(context: any AccountContextProtocol) -> InputD
         canViewPeerId.set(FastSettings.canViewPeerId)
     }, toggleOLED: {
         setTauOLEDMode(!TauSettings.shared.current.oledMode, context: context)
+    }, toggleGhost: { keyPath in
+        if let keyPath {
+            TauSettings.shared.update { current in
+                var current = current
+                current.ghost[keyPath: keyPath] = !current.ghost[keyPath: keyPath]
+                return current
+            }
+        } else {
+            toggleTauGhostMode()
+        }
     })
 
     let signal = combineLatest(TauSettings.shared.signal, canViewPeerId.get()) |> map { values, canViewPeerId in
