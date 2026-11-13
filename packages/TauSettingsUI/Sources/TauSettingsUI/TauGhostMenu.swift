@@ -3,17 +3,7 @@ import SwiftSignalKit
 import TauSettings
 
 public func toggleTauGhostMode() {
-    TauSettings.shared.update { current in
-        var current = current
-        let enable = !tauGhostModeIsOn(current.ghost)
-        current.ghost.hideReadReceipts = enable
-        current.ghost.hideOnlineStatus = enable
-        current.ghost.hideTyping = enable
-        current.ghost.hideStoryViews = enable
-        current.ghost.hideContentConsumption = enable
-        current.ghost.hideChannelViews = enable
-        return current
-    }
+    TauSettings.shared.toggleGhostMode()
 }
 
 private final class TauGhostMenuTarget: NSObject {

@@ -43,6 +43,7 @@ let deps: [(String, String)] = [
     ("SystemPermissions", "../SystemPermissions"),
     ("ApiCredentials", "../ApiCredentials"),
     ("Translate", "../Translate"),
+    ("TauSettings", "../TauSettings"),
     ("InlineStickerLayer", "../InlineStickerLayer"),
 ]
 

@@ -113,7 +113,7 @@ public class ChatVoiceRowItem: ChatMediaItem {
                 parameters.transcribeData = .init(state: .state(.collapsed(true)), text: nil, isPending: false, fontColor: transcribtedColor, backgroundColor: bgColor)
             } else {
                 let locked: Bool
-                if let cooldown = context.audioTranscriptionTrial.cooldownUntilTime, cooldown > Int32(Date().timeIntervalSince1970) {
+                if !tauTranscribesLocally(message), let cooldown = context.audioTranscriptionTrial.cooldownUntilTime, cooldown > Int32(Date().timeIntervalSince1970) { // Taugram
                     locked = true
                 } else {
                     locked = false

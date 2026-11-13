@@ -49,6 +49,7 @@ import PerfLab
 #endif
 import SettingsUI
 import HTMLBubbles
+import TauSettings
 
 //#if BETA || DEBUG
 //import Firebase
@@ -501,6 +502,7 @@ class AppDelegate: NSResponder, NSApplicationDelegate, NSUserNotificationCenterD
         } else {
             
             
+            _ = tauSetBubbleRadius(CGFloat(TauSettings.shared.current.bubbleRadius)) // Taugram
             let data = combineLatest(themeSettingsView(accountManager: accountManager) |> take(1), accountManager.transaction { transaction in
                  transaction.getSharedData(SharedDataKeys.localizationSettings)?.get(LocalizationSettings.self)
             }) |> deliverOnMainQueue
@@ -640,6 +642,7 @@ class AppDelegate: NSResponder, NSApplicationDelegate, NSUserNotificationCenterD
             armCrashMarker(folder: rootPath)
             
             
+            _ = tauSetBubbleRadius(CGFloat(TauSettings.shared.current.bubbleRadius)) // Taugram
             let data = combineLatest(accountManager.transaction {
                 $0.getAccessChallengeData()
             }, themeSettingsView(accountManager: accountManager) |> take(1), accountManager.transaction { transaction in
@@ -673,14 +676,15 @@ class AppDelegate: NSResponder, NSApplicationDelegate, NSUserNotificationCenterD
                 
                 
                 let previousBackingScale: Atomic<CGFloat> = Atomic(value: System.backingScale)
-                let signal: Signal<(theme: TelegramPresentationTheme, animated: Bool)?, NoError> = combineLatest(queue: .mainQueue(), themeSettingsView(accountManager: accountManager), backingProperties.get(), systemThemeColorsSignal()) |> map { settings, backingScale, systemColors in
+                let signal: Signal<(theme: TelegramPresentationTheme, animated: Bool)?, NoError> = combineLatest(queue: .mainQueue(), themeSettingsView(accountManager: accountManager), backingProperties.get(), systemThemeColorsSignal(), TauSettings.shared.signal |> map { $0.bubbleRadius } |> distinctUntilChanged) |> map { settings, backingScale, systemColors, bubbleRadius in // Taugram
                     System.legacyMenu = settings.legacyMenu
                     let resolved = settings.palette.name == systemPalette.name ? settings.withUpdatedPalette(systemColors) : settings
-                    return (resolved, backingScale)
-                } |> deliverOn(resourcesQueue) |> map { settings, backingScale in
+                    return (resolved, backingScale, bubbleRadius) // Taugram
+                } |> deliverOn(resourcesQueue) |> map { settings, backingScale, bubbleRadius in // Taugram
                     let previous = basicTheme.swap(settings)
                     let previousScale = previousBackingScale.swap(backingScale)
-                    if previous?.palette != settings.palette || previous?.bubbled != settings.bubbled || previous?.wallpaper != settings.wallpaper || previous?.fontSize != settings.fontSize || previous?.cloudTheme != settings.cloudTheme || previousScale != backingScale  {
+                    let radiusChanged = tauSetBubbleRadius(CGFloat(bubbleRadius)) // Taugram
+                    if previous?.palette != settings.palette || previous?.bubbled != settings.bubbled || previous?.wallpaper != settings.wallpaper || previous?.fontSize != settings.fontSize || previous?.cloudTheme != settings.cloudTheme || previousScale != backingScale || radiusChanged { // Taugram
                         let animated = (previous?.fontSize == settings.fontSize && previous?.palette != settings.palette) || previous?.bubbled != settings.bubbled || previous?.cloudTheme?.id != settings.cloudTheme?.id || previous?.palette.isDark != settings.palette.isDark
                         return (theme: updateTheme(with: settings, animated: animated, resolvedSystemPalette: settings.palette, scaleFactor: backingScale), animated: animated)
                     } else {

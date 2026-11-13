@@ -535,8 +535,9 @@ public final class ChatLiveTranslateContext {
             }
             
             var translationState = translationState
+            let tauGoogle = TauCoreSettings.shared.usesGoogleTranslation // Taugram
             if let peer = peer {
-                if !peer.isPremium {
+                if !peer.isPremium && !tauGoogle { // Taugram
                     let showPaywall = settings.paywall?.show ?? true
                     translationState?.paywall = showPaywall
                     isHidden = isHidden || !showPaywall
@@ -552,9 +553,9 @@ public final class ChatLiveTranslateContext {
             }
             
             if !isHidden && translationState?.fromLang != translationState?.toLang  {
-                return (translationState, appearance, peer?.isPremium == true, autoTranslate)
+                return (translationState, appearance, peer?.isPremium == true || tauGoogle, autoTranslate) // Taugram
             } else {
-                return (nil, appearance, peer?.isPremium == true, autoTranslate)
+                return (nil, appearance, peer?.isPremium == true || tauGoogle, autoTranslate) // Taugram
             }
             
         } |> deliverOnPrepareQueue
@@ -627,7 +628,8 @@ public final class ChatLiveTranslateContext {
     }
         
     private func activateTranslation(for msgIds: [MessageId], state: State) -> Void {
-        let signal = context.engine.messages.translateMessages(messageIds: msgIds, fromLang: nil, toLang: state.to, enableLocalIfPossible: false, tone: state.tone)
+        let tauGoogle = TauCoreSettings.shared.usesGoogleTranslation && engineExperimentalInternalTranslationService != nil // Taugram
+        let signal = context.engine.messages.translateMessages(messageIds: msgIds, fromLang: tauGoogle ? (state.from.isEmpty ? "auto" : state.from) : nil, toLang: state.to, enableLocalIfPossible: tauGoogle, tone: state.tone) // Taugram
 
         actionsDisposable.add(signal.start(error: { [weak self] error in
             self?.updateState { current in
@@ -650,7 +652,7 @@ public final class ChatLiveTranslateContext {
     }
 
     private func activateTranscriptionTranslation(for messageId: MessageId, text: String, state: State) -> Void {
-        let signal = context.engine.messages.translate(text: text, toLang: state.to, entities: [], tone: state.tone)
+        let signal = tauTranslateText(context: context, text: text, from: state.from, to: state.to, tone: state.tone) // Taugram
         |> deliverOn(prepareQueue)
 
         actionsDisposable.add(signal.start(next: { [weak self] result in
@@ -1038,4 +1040,17 @@ public func chatDictationLanguage(context: any AccountContextProtocol, peerId: E
         }
     }
     |> timeout(0.5, queue: prepareQueue, alternate: .single(nil))
+}
+
+private func tauTranslateText(context: any AccountContextProtocol, text: String, from: String, to: String, tone: TranslationTone) -> Signal<(String, [MessageTextEntity])?, TranslationError> {
+    guard TauCoreSettings.shared.usesGoogleTranslation else {
+        return context.engine.messages.translate(text: text, toLang: to, entities: [], tone: tone)
+    }
+    return Translate.translateText(text: text, from: from.isEmpty ? nil : from, to: to)
+    |> map { value -> (String, [MessageTextEntity])? in
+        return (value.result, [])
+    }
+    |> `catch` { _ -> Signal<(String, [MessageTextEntity])?, TranslationError> in
+        return .single(nil)
+    }
 }

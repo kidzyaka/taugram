@@ -69,6 +69,14 @@ public struct TauSettingsValues: Codable, Equatable {
     public var appIcon: String?
     public var oledMode: Bool = false
     public var oledThemeSnapshot: Data?
+    public var bubbleRadius: Int = 16
+    public var fasterTransfers: Bool = false
+    public var hideBlockedInGroups: Bool = false
+    public var hiddenMenuItems: [String] = []
+    public var forceSwipeAction: String?
+    public var localTranscription: Bool = false
+    public var googleTranslation: Bool = false
+    public var transcriptionModel: String = "system"
 
     public init() {
     }
@@ -97,6 +105,14 @@ public struct TauSettingsValues: Codable, Equatable {
         self.appIcon = try container.decodeIfPresent(String.self, forKey: .appIcon)
         self.oledMode = try container.decodeIfPresent(Bool.self, forKey: .oledMode) ?? false
         self.oledThemeSnapshot = try container.decodeIfPresent(Data.self, forKey: .oledThemeSnapshot)
+        self.bubbleRadius = try container.decodeIfPresent(Int.self, forKey: .bubbleRadius) ?? 16
+        self.fasterTransfers = try container.decodeIfPresent(Bool.self, forKey: .fasterTransfers) ?? false
+        self.hideBlockedInGroups = try container.decodeIfPresent(Bool.self, forKey: .hideBlockedInGroups) ?? false
+        self.hiddenMenuItems = try container.decodeIfPresent([String].self, forKey: .hiddenMenuItems) ?? []
+        self.forceSwipeAction = try container.decodeIfPresent(String.self, forKey: .forceSwipeAction)
+        self.localTranscription = try container.decodeIfPresent(Bool.self, forKey: .localTranscription) ?? false
+        self.googleTranslation = try container.decodeIfPresent(Bool.self, forKey: .googleTranslation) ?? false
+        self.transcriptionModel = try container.decodeIfPresent(String.self, forKey: .transcriptionModel) ?? "system"
     }
 
     public var hasValidDangerousConsent: Bool {
@@ -122,12 +138,13 @@ public struct TauSettingsValues: Codable, Equatable {
         for (id, ghost) in self.ghostByAccount {
             ghostByAccount[PeerId(id)] = ghost.coreFlags
         }
-        return TauCoreFlags(dangerousFeaturesAllowed: self.dangerousFeaturesAllowed, ghost: self.ghost.coreFlags, ghostByAccount: ghostByAccount, keepDeletedMessages: self.keepDeletedMessages, keepEditHistory: self.keepEditHistory, bypassContentProtection: self.bypassContentProtection, viewOnceWithoutMarking: self.viewOnceWithoutMarking, viewOnceInSecretChats: self.viewOnceInSecretChats)
+        return TauCoreFlags(dangerousFeaturesAllowed: self.dangerousFeaturesAllowed, ghost: self.ghost.coreFlags, ghostByAccount: ghostByAccount, keepDeletedMessages: self.keepDeletedMessages, keepEditHistory: self.keepEditHistory, bypassContentProtection: self.bypassContentProtection, viewOnceWithoutMarking: self.viewOnceWithoutMarking, viewOnceInSecretChats: self.viewOnceInSecretChats, fasterTransfers: self.fasterTransfers, googleTranslation: self.googleTranslation)
     }
 }
 
 public final class TauSettings {
     public static let dangerousConsentVersion = 1
+    public static let accountsLimit = 10
     public static let shared = TauSettings(defaults: .standard)
 
     private static let storageKey = "taugram.settings"
@@ -185,6 +202,28 @@ public final class TauSettings {
             var current = current
             current.dangerousConsent = TauDangerousConsent(version: TauSettings.dangerousConsentVersion, decision: decision, date: Date())
             current.dangerousFeaturesEnabled = decision == .enabled
+            return current
+        }
+    }
+}
+
+extension TauGhostSettings {
+    public var isFullyOn: Bool {
+        return self.hideReadReceipts && self.hideOnlineStatus && self.hideTyping && self.hideStoryViews && self.hideContentConsumption && self.hideChannelViews
+    }
+}
+
+extension TauSettings {
+    public func toggleGhostMode() {
+        self.update { current in
+            var current = current
+            let enable = !current.ghost.isFullyOn
+            current.ghost.hideReadReceipts = enable
+            current.ghost.hideOnlineStatus = enable
+            current.ghost.hideTyping = enable
+            current.ghost.hideStoryViews = enable
+            current.ghost.hideContentConsumption = enable
+            current.ghost.hideChannelViews = enable
             return current
         }
     }

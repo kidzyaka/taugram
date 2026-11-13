@@ -11,6 +11,41 @@ index c3c37c555de662b93fa00d8d5cfec50c5ed5f661..e319a7bdfe0a218aa8b2d1e64c973321
      declareEncodable(ReplyMarkupMessageAttribute.self, f: { ReplyMarkupMessageAttribute(decoder: $0) })
      declareEncodable(OutgoingChatContextResultMessageAttribute.self, f: { OutgoingChatContextResultMessageAttribute(decoder: $0) })
      declareEncodable(HttpReferenceMediaResource.self, f: { HttpReferenceMediaResource(decoder: $0) })
+diff --git a/submodules/TelegramCore/Sources/Network/FetchV2.swift b/submodules/TelegramCore/Sources/Network/FetchV2.swift
+index c916f267d9232cea1f3362aa5c365174531b46b4..537f7c9be91e7947c470b257d33ee84c7d5fe9c3 100644
+--- a/submodules/TelegramCore/Sources/Network/FetchV2.swift
++++ b/submodules/TelegramCore/Sources/Network/FetchV2.swift
+@@ -502,7 +502,7 @@ private final class FetchImpl {
+                 }
+             }
+             
+-            self.fastDownloads = network.engineKind == .rust
++            self.fastDownloads = network.engineKind == .rust || TauCoreSettings.shared.fasterTransfers // Taugram
+             if isStory {
+                 self.defaultPartSize = 512 * 1024
+             } else {
+@@ -1232,7 +1232,7 @@ private final class FetchImpl {
+             let span = max(0.25, now - state.recentParts[0].time)
+             let throughput = Double(state.recentParts.reduce(Int64(0), { $0 + $1.bytes })) / span
+             if throughput >= fastDownloadLargePartThroughput {
+-                state.partSize = min(state.maxPartSize, fastDownloadLargePartSize)
++                state.partSize = min(state.maxPartSize, TauCoreSettings.shared.fasterTransfers ? 1024 * 1024 : fastDownloadLargePartSize) // Taugram
+             } else if throughput < fastDownloadSmallPartThroughput {
+                 state.partSize = max(state.minPartSize, fastDownloadSmallPartSize)
+             }
+diff --git a/submodules/TelegramCore/Sources/Network/MultipartUpload.swift b/submodules/TelegramCore/Sources/Network/MultipartUpload.swift
+index c9ae018ca466f62b276489b1a25317dc1d77ed71..21b5b2511a1bef76fe43a3803591df3926967ddf 100644
+--- a/submodules/TelegramCore/Sources/Network/MultipartUpload.swift
++++ b/submodules/TelegramCore/Sources/Network/MultipartUpload.swift
+@@ -155,6 +155,8 @@ final class MultipartUploadManager {
+         
+         if increaseParallelParts {
+             self.parallelParts = 30
++        } else if TauCoreSettings.shared.fasterTransfers { // Taugram
++            self.parallelParts = 12 // Taugram
+         } else {
+             self.parallelParts = 3
+         }
 diff --git a/submodules/TelegramCore/Sources/State/AccountViewTracker.swift b/submodules/TelegramCore/Sources/State/AccountViewTracker.swift
 index 964f7602e1ef27ff35a02dddfe321effff5e3e9c..e23d46d0644d406553b7156c1fa63fb7ad06ede3 100644
 --- a/submodules/TelegramCore/Sources/State/AccountViewTracker.swift
@@ -280,10 +315,10 @@ index 91c5c772f3abbc45895387981e3f960ac2628938..555ee97852875c1b75d8294d8a4576ce
                  if let attribute = attribute as? AudioTranscriptionMessageAttribute {
 diff --git a/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift b/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift
 new file mode 100644
-index 0000000000000000000000000000000000000000..75fda4274da0a94feafbdef7aad84efb8bc86c4c
+index 0000000000000000000000000000000000000000..8f17f6903884c0a8a031d869725a22e7bc5de590
 --- /dev/null
 +++ b/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift
-@@ -0,0 +1,110 @@
+@@ -0,0 +1,122 @@
 +import Foundation
 +import Postbox
 +
@@ -320,8 +355,10 @@ index 0000000000000000000000000000000000000000..75fda4274da0a94feafbdef7aad84efb
 +    public var bypassContentProtection: Bool
 +    public var viewOnceWithoutMarking: Bool
 +    public var viewOnceInSecretChats: Bool
++    public var fasterTransfers: Bool
++    public var googleTranslation: Bool
 +
-+    public init(dangerousFeaturesAllowed: Bool = false, ghost: TauGhostFlags = .off, ghostByAccount: [PeerId: TauGhostFlags] = [:], keepDeletedMessages: Bool = false, keepEditHistory: Bool = false, bypassContentProtection: Bool = false, viewOnceWithoutMarking: Bool = false, viewOnceInSecretChats: Bool = false) {
++    public init(dangerousFeaturesAllowed: Bool = false, ghost: TauGhostFlags = .off, ghostByAccount: [PeerId: TauGhostFlags] = [:], keepDeletedMessages: Bool = false, keepEditHistory: Bool = false, bypassContentProtection: Bool = false, viewOnceWithoutMarking: Bool = false, viewOnceInSecretChats: Bool = false, fasterTransfers: Bool = false, googleTranslation: Bool = false) {
 +        self.dangerousFeaturesAllowed = dangerousFeaturesAllowed
 +        self.ghost = ghost
 +        self.ghostByAccount = ghostByAccount
@@ -330,6 +367,8 @@ index 0000000000000000000000000000000000000000..75fda4274da0a94feafbdef7aad84efb
 +        self.bypassContentProtection = bypassContentProtection
 +        self.viewOnceWithoutMarking = viewOnceWithoutMarking
 +        self.viewOnceInSecretChats = viewOnceInSecretChats
++        self.fasterTransfers = fasterTransfers
++        self.googleTranslation = googleTranslation
 +    }
 +}
 +
@@ -392,6 +431,14 @@ index 0000000000000000000000000000000000000000..75fda4274da0a94feafbdef7aad84efb
 +            return false
 +        }
 +        return !secretChat || flags.viewOnceInSecretChats
++    }
++
++    public var fasterTransfers: Bool {
++        return self.current.fasterTransfers
++    }
++
++    public var usesGoogleTranslation: Bool {
++        return self.current.googleTranslation
 +    }
 +}
 diff --git a/submodules/TelegramCore/Sources/Tau/TauGhostNetwork.swift b/submodules/TelegramCore/Sources/Tau/TauGhostNetwork.swift

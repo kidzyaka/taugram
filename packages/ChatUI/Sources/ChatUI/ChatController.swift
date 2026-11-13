@@ -2803,6 +2803,7 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
         
     
     private var groupsInCommon: GroupsInCommonContext?
+    private let tauForceSwipe = TauForceSwipe() // Taugram
     
     private struct State : Equatable {
 
@@ -2836,6 +2837,8 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
         var monoforumState: MonoforumUIState?
 
         var walletFiatRate: WalletFiatRateProjection?
+
+        var tauHiddenAuthors: Set<PeerId> = Set() // Taugram
 
         var presentationResolved: Bool = false
     }
@@ -4190,6 +4193,14 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
                 return current
             }
         }))
+
+        presentationDisposable.add((tauHiddenAuthors(context: context, peerId: self.chatLocation.peerId) |> deliverOnMainQueue).start(next: { [weak self] hidden in // Taugram
+            self?.updateState { current in // Taugram
+                var current = current // Taugram
+                current.tauHiddenAuthors = hidden // Taugram
+                return current // Taugram
+            } // Taugram
+        })) // Taugram
         
         
         
@@ -4227,7 +4238,8 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
                 lhs.peerStatus == rhs.peerStatus &&
                 (lhs.commonGroups == rhs.commonGroups || lhs.peerStatus?.phoneCountry == nil) &&
                 lhs.monoforumState == rhs.monoforumState &&
-                lhs.walletFiatRate == rhs.walletFiatRate
+                lhs.walletFiatRate == rhs.walletFiatRate &&
+                lhs.tauHiddenAuthors == rhs.tauHiddenAuthors // Taugram
         })
         
         let currentRanksValue = self.currentRanksValue
@@ -4363,7 +4375,7 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
                 if let peerView = peerView as? PeerView, let peer = peerView.peers[peerView.peerId], peer.isRestrictedChannel(context.contentSettings) {
                     proccesedView = ChatHistoryView(originalView: view, filteredEntries: [], theme: chatTheme)
                 } else {
-                    let msgEntries = view.entries
+                    let msgEntries = tauFilterHiddenAuthors(view.entries, hidden: uiState.tauHiddenAuthors) // Taugram
                     
                     let topMessages: [Message]?
                     switch chatLocation {
@@ -5845,6 +5857,7 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
             self?.liveTranslate?.setTone(tone)
         }
         chatInteraction.enableTranslatePaywall = { [weak self] in
+            guard !TauCoreSettings.shared.usesGoogleTranslation else { return } // Taugram
             self?.liveTranslate?.enablePaywall()
         }
         chatInteraction.summarize = { [weak self] message in
@@ -7107,7 +7120,7 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
         
         chatInteraction.toggleTranslate = { [weak self] in
             let enabled = self?.uiState.with { $0.translate?.translate } == true
-            if !context.isPremium && !enabled {
+            if !context.isPremium && !enabled && !TauCoreSettings.shared.usesGoogleTranslation { // Taugram
                 prem(with: PremiumBoardingController(context: context, source: .translations, openFeatures: true), for: context.window)
             } else {
                 if !enabled {
@@ -7118,7 +7131,7 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
             self?.genericView.tableView.notifyScrollHandlers()
         }
         chatInteraction.hideTranslation = { [weak self] in
-            if !context.isPremium {
+            if !context.isPremium && !TauCoreSettings.shared.usesGoogleTranslation { // Taugram
                 self?.liveTranslate?.disablePaywall()
                 showModalText(for: context.window, text: strings().chatTranslateMenuHidePaywallTooltip)
             } else {
@@ -8041,6 +8054,19 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
                     }
                     return state
                 }
+            } else if tauTranscribesLocally(message), message.audioTranscription == nil { // Taugram
+                strongSelf.updateState { state in // Taugram
+                    var state = state // Taugram
+                    state.transribe[messageId] = .loading // Taugram
+                    return state // Taugram
+                } // Taugram
+                strongSelf.transcribeDisposable.set((tauLocalTranscription(context: context, message: message) |> deliverOnMainQueue).start(next: { [weak strongSelf] success in // Taugram
+                    strongSelf?.updateState { state in // Taugram
+                        var state = state // Taugram
+                        state.transribe[messageId] = .revealed(success) // Taugram
+                        return state // Taugram
+                    } // Taugram
+                }), forKey: messageId) // Taugram
             } else {
                 
                 let currentTime = Int32(Date().timeIntervalSince1970)
@@ -12077,6 +12103,13 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
             return .rejected
         }, with: self, for: .mouseMoved, priority: .low)
 
+        for eventType in [NSEvent.EventType.rightMouseDown, .leftMouseDown, .pressure] { // Taugram
+            self.context.window.set(mouseHandler: { [weak self] _ in // Taugram
+                guard let self, let window = self.window, self.tauForceSwipe.handlePress(window: window) else { return .rejected } // Taugram
+                return .invoked // Taugram
+            }, with: self, for: eventType, priority: .supreme) // Taugram
+        } // Taugram
+
         self.context.window.add(swipe: { [weak self] direction, _ -> SwipeHandlerResult in
             guard let `self` = self, let window = self.window, self.chatInteraction.presentation.canReplyInRestrictedMode else {return .failed}
             let swipeState: SwipeState?
@@ -12114,6 +12147,7 @@ open class ChatController<Context: AccountContextProtocol>: TelegramGenericViewC
                         }
                     }
                     (item.view as? RevealTableView)?.initRevealState()
+                    self.tauForceSwipe.begin(item) // Taugram
                     return .success(RevealTableItemController(item: item))
                 } else {
                     return .failed

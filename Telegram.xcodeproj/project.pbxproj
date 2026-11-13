@@ -989,6 +989,9 @@
 		D1367CE64D2304C396B8D067 /* WidgetEngineService.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = A4413997759AB0FBF49F01F4 /* WidgetEngineService.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AB43812C4595323370148413 /* WidgetEngineXPC in Frameworks */ = {isa = PBXBuildFile; productRef = 44ADA01DFCFE7374EA00FD45 /* WidgetEngineXPC */; };
 		4E29D9BCA23EC764A8C52357 /* WidgetEngineInstall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899E2E79C1BCA9EB1310CC2E /* WidgetEngineInstall.swift */; };
+		AABEBD4F6C93DAECAD348E97 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40CA0678CA47E1E9194BF532 /* main.swift */; };
+		FAF12E0EE789AB7742D19D75 /* TauSpeechEngine in Frameworks */ = {isa = PBXBuildFile; productRef = EB481B5C729A1BDA683D2D5C /* TauSpeechEngine */; };
+		1E9A32484968ADDC1DEBBFDF /* TaugramSpeech.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = EAD30F52B477BFA74DEF26D7 /* TaugramSpeech.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1005,6 +1008,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 685F0F9AA720136F75F49A14;
 			remoteInfo = WidgetEngineService;
+		};
+		336C2C0D971D839F18DE4D80 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D098C70D1D7E175A007784E4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 45064AB6F1383E729DDB3F76;
+			remoteInfo = TaugramSpeech;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -1047,6 +1057,7 @@
 			dstSubfolderSpec = 16;
 			files = (
 				D1367CE64D2304C396B8D067 /* WidgetEngineService.xpc in Embed XPC Services */,
+				1E9A32484968ADDC1DEBBFDF /* TaugramSpeech.xpc in Embed XPC Services */,
 			);
 			name = "Embed XPC Services";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2030,6 +2041,12 @@
 		528B2F559B52BB3D94E4DFF5 /* WidgetEngineService.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WidgetEngineService.entitlements; sourceTree = "<group>"; };
 		4DC0434B47892A4E54633FA7 /* WidgetEngineXPC */ = {isa = PBXFileReference; lastKnownFileType = folder; name = WidgetEngineXPC; path = packages/WidgetEngineXPC; sourceTree = "<group>"; };
 		899E2E79C1BCA9EB1310CC2E /* WidgetEngineInstall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetEngineInstall.swift; sourceTree = "<group>"; };
+		EAD30F52B477BFA74DEF26D7 /* TaugramSpeech.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = TaugramSpeech.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
+		40CA0678CA47E1E9194BF532 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		C7AB79803FFCF5068D78B2FB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B2C4E99FC57F189243F3D4D5 /* TaugramSpeech.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TaugramSpeech.entitlements; sourceTree = "<group>"; };
+		E1BC4F3212C1E976F448ADBA /* TauSpeech */ = {isa = PBXFileReference; lastKnownFileType = folder; name = TauSpeech; path = packages/TauSpeech; sourceTree = "<group>"; };
+		8A5BC7AAB5C681421BC620A0 /* TauSpeechEngine */ = {isa = PBXFileReference; lastKnownFileType = folder; name = TauSpeechEngine; path = packages/TauSpeechEngine; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -2344,6 +2361,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				6E872F6E478097CC10F446F9 /* WidgetEngineServer in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		516170D36866E272ACF40D5B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FAF12E0EE789AB7742D19D75 /* TauSpeechEngine in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2786,6 +2811,8 @@
 				447E693028674930A9722A3F /* SelectCountryUI */,
 				2382F66FCB03472CB031B1D7 /* GroupsInCommonUI */,
 				8EE9427275CAA2FCF0AFD0AE /* TauSettings */,
+				E1BC4F3212C1E976F448ADBA /* TauSpeech */,
+				8A5BC7AAB5C681421BC620A0 /* TauSpeechEngine */,
 				D0AF97C9DB74D023CF43E5D2 /* TauSettingsUI */,
 				3735CDD1DC42418CBDF358F5 /* QrStudioUI */,
 				A1A11A1A0000000000000002 /* AppAnalytics */,
@@ -3387,6 +3414,7 @@
 				D098C7171D7E175A007784E4 /* Telegram-Mac */,
 				C232EA921E1D07E700C4D38C /* TelegramShare */,
 				43BAAD307E34D5A7D9B68645 /* WidgetEngineService */,
+				921AEE67F05105AA70AC28C9 /* TaugramSpeech */,
 				D098C7161D7E175A007784E4 /* Products */,
 				D098C7311D7E18CB007784E4 /* Frameworks */,
 				F050574E30202ABC006E48EA /* Recovered References */,
@@ -3398,6 +3426,7 @@
 			children = (
 				A4413997759AB0FBF49F01F4 /* WidgetEngineService.xpc */,
 				D098C7151D7E175A007784E4 /* Taugram.app */,
+				EAD30F52B477BFA74DEF26D7 /* TaugramSpeech.xpc */,
 				C232EA911E1D07E700C4D38C /* TelegramShare.appex */,
 			);
 			name = Products;
@@ -3653,6 +3682,17 @@
 			path = "Telegram-Mac/WidgetEngineService";
 			sourceTree = "<group>";
 		};
+		921AEE67F05105AA70AC28C9 /* TaugramSpeech */ = {
+			isa = PBXGroup;
+			children = (
+				40CA0678CA47E1E9194BF532 /* main.swift */,
+				C7AB79803FFCF5068D78B2FB /* Info.plist */,
+				B2C4E99FC57F189243F3D4D5 /* TaugramSpeech.entitlements */,
+			);
+			name = TaugramSpeech;
+			path = "Telegram-Mac/TaugramSpeech";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -3731,6 +3771,7 @@
 			);
 			dependencies = (
 				4F3B0F64E65A2AC4EEC0B039 /* PBXTargetDependency */,
+				FDB08E5389D0AF1209CA0671 /* PBXTargetDependency */,
 				275E4B3F2EEC24B700BC1A68 /* PBXTargetDependency */,
 			);
 			name = Telegram;
@@ -3950,6 +3991,26 @@
 			productReference = A4413997759AB0FBF49F01F4 /* WidgetEngineService.xpc */;
 			productType = "com.apple.product-type.xpc-service";
 		};
+		45064AB6F1383E729DDB3F76 /* TaugramSpeech */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 42B000C2044543AEE32BAD18 /* Build configuration list for PBXNativeTarget "TaugramSpeech" */;
+			buildPhases = (
+				BED8E6A550ED03BE2ED2ACDA /* Sources */,
+				516170D36866E272ACF40D5B /* Frameworks */,
+				2586D68D73D0F232D78DECFF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TaugramSpeech;
+			packageProductDependencies = (
+				EB481B5C729A1BDA683D2D5C /* TauSpeechEngine */,
+			);
+			productName = TaugramSpeech;
+			productReference = EAD30F52B477BFA74DEF26D7 /* TaugramSpeech.xpc */;
+			productType = "com.apple.product-type.xpc-service";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -4032,6 +4093,7 @@
 			projectRoot = "";
 			targets = (
 				685F0F9AA720136F75F49A14 /* WidgetEngineService */,
+				45064AB6F1383E729DDB3F76 /* TaugramSpeech */,
 				D098C7141D7E175A007784E4 /* Telegram */,
 				C232EA901E1D07E700C4D38C /* TelegramShare */,
 			);
@@ -4604,6 +4666,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2586D68D73D0F232D78DECFF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 
@@ -4816,6 +4885,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BED8E6A550ED03BE2ED2ACDA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AABEBD4F6C93DAECAD348E97 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -4828,6 +4905,11 @@
 			isa = PBXTargetDependency;
 			target = 685F0F9AA720136F75F49A14 /* WidgetEngineService */;
 			targetProxy = D827F2DD47CE9F74A24B8BD8 /* PBXContainerItemProxy */;
+		};
+		FDB08E5389D0AF1209CA0671 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 45064AB6F1383E729DDB3F76 /* TaugramSpeech */;
+			targetProxy = 336C2C0D971D839F18DE4D80 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -5295,6 +5377,68 @@
 			};
 			name = Release;
 		};
+		EECB99605057E6AB5DB31379 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "Telegram-Mac/TaugramSpeech/TaugramSpeech.entitlements";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = AF4N4AKWPQ;
+				ENABLE_DEBUG_DYLIB = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INFOPLIST_FILE = "Telegram-Mac/TaugramSpeech/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kidzyaka.taugram.Speech;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				VALID_ARCHS = "arm64 x86_64";
+			};
+			name = Debug;
+		};
+		64A7D1388CDD35CEC3FD0761 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "Telegram-Mac/TaugramSpeech/TaugramSpeech.entitlements";
+				CODE_SIGN_IDENTITY = "";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = AF4N4AKWPQ;
+				ENABLE_DEBUG_DYLIB = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				INFOPLIST_FILE = "Telegram-Mac/TaugramSpeech/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kidzyaka.taugram.Speech;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				VALID_ARCHS = "arm64 x86_64";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -5330,6 +5474,15 @@
 			buildConfigurations = (
 				9472475D95A60FFE6EA72B20 /* Debug */,
 				372C029CB572B0DF7815324F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		42B000C2044543AEE32BAD18 /* Build configuration list for PBXNativeTarget "TaugramSpeech" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EECB99605057E6AB5DB31379 /* Debug */,
+				64A7D1388CDD35CEC3FD0761 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -6261,6 +6414,10 @@
 		44ADA01DFCFE7374EA00FD45 /* WidgetEngineXPC */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = WidgetEngineXPC;
+		};
+		EB481B5C729A1BDA683D2D5C /* TauSpeechEngine */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TauSpeechEngine;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

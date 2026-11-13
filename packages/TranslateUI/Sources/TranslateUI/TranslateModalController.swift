@@ -1370,7 +1370,7 @@ public func TranslateModalController(context: any AccountContextProtocol, from: 
             |> map { result -> (detect: String?, result: String, entities: [MessageTextEntity]) in
                 return (detect: nil, result: result.0, entities: result.1)
             }
-        } else if let messageId = messageId {
+        } else if let messageId = messageId, !TauCoreSettings.shared.usesGoogleTranslation { // Taugram
             signal = context.engine.messages.translate(text: text, toLang: stateValue.with { $0.to }, tone: stateValue.with { $0.tone }, messageId: messageId)
             |> mapError { _ -> Translate.Error in
                 return .generic
@@ -1383,7 +1383,7 @@ public func TranslateModalController(context: any AccountContextProtocol, from: 
                 }
             }
         } else {
-            signal = translateBlocks(context: context, from: stateValue.with { $0.from }, to: stateValue.with { $0.to }, blocks: blocks, configState: configState, tone: stateValue.with { $0.tone })
+            signal = translateBlocks(context: context, from: stateValue.with { $0.from }, to: stateValue.with { $0.to }, blocks: blocks, configState: TauCoreSettings.shared.usesGoogleTranslation ? .alternative : configState, tone: stateValue.with { $0.tone }) // Taugram
         }
         disposable.set(getAnalyticsContext().preservingPresentation(signal).start(next: { result in
             updateState { current in

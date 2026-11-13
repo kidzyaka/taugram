@@ -9,6 +9,7 @@ import InputDataUI
 import InAppSettings
 import GeneralRows
 import TauSettings
+import TauSpeech
 
 private final class Arguments {
     let toggleDangerousFeatures: () -> Void
@@ -23,7 +24,10 @@ private final class Arguments {
     let chatLock: (TauChatLockAction) -> Void
     let openColorEditor: () -> Void
     let mcp: (TauMCPAction) -> Void
-    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void, toggleValue: @escaping (WritableKeyPath<TauSettingsValues, Bool>) -> Void, chatLock: @escaping (TauChatLockAction) -> Void, openColorEditor: @escaping () -> Void, mcp: @escaping (TauMCPAction) -> Void) {
+    let updateValues: ((inout TauSettingsValues) -> Void) -> Void
+    let openMessageMenu: () -> Void
+    let openSpeechModels: () -> Void
+    init(toggleDangerousFeatures: @escaping () -> Void, reviewConsent: @escaping () -> Void, selectAppIcon: @escaping (TauAppIcon) -> Void, toggleMessageSeconds: @escaping () -> Void, toggleHideStories: @escaping () -> Void, togglePeerId: @escaping () -> Void, toggleOLED: @escaping () -> Void, toggleGhost: @escaping (WritableKeyPath<TauGhostSettings, Bool>?) -> Void, toggleValue: @escaping (WritableKeyPath<TauSettingsValues, Bool>) -> Void, chatLock: @escaping (TauChatLockAction) -> Void, openColorEditor: @escaping () -> Void, mcp: @escaping (TauMCPAction) -> Void, updateValues: @escaping ((inout TauSettingsValues) -> Void) -> Void, openMessageMenu: @escaping () -> Void, openSpeechModels: @escaping () -> Void) {
         self.toggleDangerousFeatures = toggleDangerousFeatures
         self.reviewConsent = reviewConsent
         self.selectAppIcon = selectAppIcon
@@ -36,6 +40,9 @@ private final class Arguments {
         self.chatLock = chatLock
         self.openColorEditor = openColorEditor
         self.mcp = mcp
+        self.updateValues = updateValues
+        self.openMessageMenu = openMessageMenu
+        self.openSpeechModels = openSpeechModels
     }
 }
 
@@ -80,6 +87,13 @@ private let _id_hide_stories = InputDataIdentifier("_id_hide_stories")
 private let _id_peer_id = InputDataIdentifier("_id_peer_id")
 private let _id_oled = InputDataIdentifier("_id_oled")
 private let _id_color_editor = InputDataIdentifier("_id_color_editor")
+private let _id_hide_blocked = InputDataIdentifier("_id_hide_blocked")
+private let _id_message_menu = InputDataIdentifier("_id_message_menu")
+private let _id_force_swipe = InputDataIdentifier("_id_force_swipe")
+private let _id_translator = InputDataIdentifier("_id_translator")
+private let _id_local_transcription = InputDataIdentifier("_id_local_transcription")
+private let _id_speech_model = InputDataIdentifier("_id_speech_model")
+private let _id_faster_transfers = InputDataIdentifier("_id_faster_transfers")
 private let _id_mcp_enabled = InputDataIdentifier("_id_mcp_enabled")
 private let _id_mcp_copy = InputDataIdentifier("_id_mcp_copy")
 private let _id_mcp_sending = InputDataIdentifier("_id_mcp_sending")
@@ -117,7 +131,7 @@ private let ghostOptions: [(key: String, title: String, keyPath: WritableKeyPath
 ]
 
 func tauGhostModeIsOn(_ ghost: TauGhostSettings) -> Bool {
-    return ghostOptions.allSatisfy { ghost[keyPath: $0.keyPath] }
+    return ghost.isFullyOn
 }
 private func _id_app_icon(_ icon: TauAppIcon) -> InputDataIdentifier {
     return InputDataIdentifier("_id_app_icon_\(icon.rawValue)")
@@ -155,11 +169,12 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
     index += 1
 
     //TODOLANG
-    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_color_editor, data: .init(name: "Color Editor", color: theme.colors.text, type: .next, viewType: .lastItem, action: arguments.openColorEditor)))
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_color_editor, data: .init(name: "Theme Editor", color: theme.colors.text, type: .next, viewType: .lastItem, action: arguments.openColorEditor)))
     index += 1
 
+
     //TODOLANG
-    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Pure black theme without blur or translucency. Theme and color settings stay locked while it is on; turning it off brings your previous theme back. The color editor changes any of the palette's colors and exports or imports .palette files."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Pure black theme without blur or translucency. Theme and color settings stay locked while it is on; turning it off brings your previous theme back. The theme editor changes any of the palette's colors and the bubble corners, and exports or imports .palette files."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
     index += 1
 
     entries.append(.sectionId(sectionId, type: .normal))
@@ -189,7 +204,79 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
     index += 1
 
     //TODOLANG
-    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_hide_stories, data: .init(name: "Hide Stories in Chat List", color: theme.colors.text, type: .switchable(state.values.hideStoriesInChatList), viewType: .lastItem, action: arguments.toggleHideStories)))
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_hide_stories, data: .init(name: "Hide Stories in Chat List", color: theme.colors.text, type: .switchable(state.values.hideStoriesInChatList), viewType: .innerItem, action: arguments.toggleHideStories)))
+    index += 1
+
+    //TODOLANG
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_hide_blocked, data: .init(name: "Hide Blocked Users in Groups", color: theme.colors.text, type: .switchable(state.values.hideBlockedInGroups), viewType: .innerItem, action: {
+        arguments.toggleValue(\.hideBlockedInGroups)
+    })))
+    index += 1
+
+    //TODOLANG
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_message_menu, data: .init(name: "Message Menu", color: theme.colors.text, type: .nextContext(state.values.hiddenMenuItems.isEmpty ? "" : "\(TauMessageMenuItem.allCases.count - state.values.hiddenMenuItems.count)/\(TauMessageMenuItem.allCases.count)"), viewType: .innerItem, action: arguments.openMessageMenu)))
+    index += 1
+
+    let swipeAction = state.values.forceSwipeAction.flatMap(TauSwipeAction.init(rawValue:))
+    //TODOLANG
+    var swipeItems: [ContextMenuItem] = [ContextMenuItem("Off", handler: {
+        arguments.updateValues { $0.forceSwipeAction = nil }
+    }, state: swipeAction == nil ? .on : nil)]
+    swipeItems.append(ContextSeparatorItem())
+    for action in TauSwipeAction.allCases {
+        swipeItems.append(ContextMenuItem(action.title, handler: {
+            arguments.updateValues { $0.forceSwipeAction = action.rawValue }
+        }, state: swipeAction == action ? .on : nil))
+    }
+    //TODOLANG
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_force_swipe, data: .init(name: "Press While Swiping", color: theme.colors.text, type: .contextSelector(swipeAction?.title ?? "Off", swipeItems), viewType: .innerItem)))
+    index += 1
+
+    //TODOLANG
+    let translatorItems: [ContextMenuItem] = [
+        ContextMenuItem("Telegram", handler: {
+            arguments.updateValues { $0.googleTranslation = false }
+        }, state: state.values.googleTranslation ? nil : .on),
+        ContextMenuItem("Google", handler: {
+            arguments.updateValues { $0.googleTranslation = true }
+        }, state: state.values.googleTranslation ? .on : nil),
+    ]
+    //TODOLANG
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_translator, data: .init(name: "Translator", color: theme.colors.text, type: .contextSelector(state.values.googleTranslation ? "Google" : "Telegram", translatorItems), viewType: .innerItem)))
+    index += 1
+
+    //TODOLANG
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_local_transcription, data: .init(name: "Transcribe Voice on This Mac", color: theme.colors.text, type: .switchable(state.values.localTranscription), viewType: state.values.localTranscription ? .innerItem : .lastItem, action: {
+        arguments.toggleValue(\.localTranscription)
+    })))
+    index += 1
+
+    if state.values.localTranscription {
+        let model = TauSpeechModel(rawValue: state.values.transcriptionModel) ?? .system
+        //TODOLANG
+        entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_speech_model, data: .init(name: "Recognition Model", color: theme.colors.text, type: .nextContext(model == .system ? "macOS" : model.title), viewType: .lastItem, action: arguments.openSpeechModels)))
+        index += 1
+    }
+
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Press While Swiping: swipe a message left on the trackpad and press down to run the chosen action instead of replying. With Google as the translator, messages and whole chats are translated without Premium; message text goes to Google. Voice messages are transcribed on this Mac, without Premium and without sending audio to Telegram: by macOS speech recognition or by a model you download, such as Parakeet or Whisper."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+    index += 1
+
+    entries.append(.sectionId(sectionId, type: .normal))
+    sectionId += 1
+
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("NETWORK"), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+    index += 1
+
+    //TODOLANG
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_faster_transfers, data: .init(name: "Faster Downloads and Uploads", color: theme.colors.text, type: .switchable(state.values.fasterTransfers), viewType: .singleItem, action: {
+        arguments.toggleValue(\.fasterTransfers)
+    })))
+    index += 1
+
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Downloads use bigger parts and more parallel requests, uploads send 12 parts at once instead of 3. On a slow connection Taugram backs off by itself. Telegram may ask the app to wait if it sends too much; turn this off if files get stuck. Up to \(TauSettings.accountsLimit) accounts can be added, without Premium."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
     index += 1
 
     entries.append(.sectionId(sectionId, type: .normal))
@@ -534,6 +621,16 @@ public func TauSettingsController(context: any AccountContextProtocol) -> InputD
         case .openLog:
             getController?()?.navigationController?.push(TauMCPLogController())
         }
+    }, updateValues: { f in
+        TauSettings.shared.update { current in
+            var current = current
+            f(&current)
+            return current
+        }
+    }, openMessageMenu: {
+        getController?()?.navigationController?.push(TauMessageMenuController())
+    }, openSpeechModels: {
+        getController?()?.navigationController?.push(TauSpeechModelsController())
     })
 
     let chatLockChanges = Signal<Void, NoError>.single(Void()) |> then(TauChatLock.shared.changes)

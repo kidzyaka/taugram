@@ -1073,6 +1073,7 @@ public class PeerListContainerView : Control {
     private var removalUndo: ChatRemovalUndoView?
     private var proxy: ProxyView?
     private var compose:ImageButton?
+    private let tauGhostButton = TauGhostTitleButton(frame: .zero) // Taugram
     private var backButton: ImageButton?
     private var glassContainer: NSView?
 
@@ -1161,6 +1162,8 @@ public class PeerListContainerView : Control {
         }
         
         statusContainer.addSubview(titleView)
+        statusContainer.addSubview(tauGhostButton) // Taugram
+        tauGhostButton.onVisibilityChange = { [weak self] in self?.needsLayout = true } // Taugram
         
         containerView.addSubview(statusContainer)
         
@@ -1429,6 +1432,7 @@ public class PeerListContainerView : Control {
             performSubviewRemoval(view, animated: animated)
             self.backButton = nil
         }
+        tauGhostButton.shouldShow = hasCompose && state.mode == .plain && !state.isContacts // Taugram
         
         
                 
@@ -1706,6 +1710,9 @@ public class PeerListContainerView : Control {
             }
         }
         
+        transition.updateFrame(view: tauGhostButton, frame: CGRect(origin: NSMakePoint(14, controlPoint.y), size: componentSize)) // Taugram
+        transition.updateAlpha(view: tauGhostButton, alpha: inlineBackButton ? 0 : progress) // Taugram
+
         if let view = forumTitle {
             transition.updateFrame(view: view, frame: CGRect(origin: .zero, size: NSMakeSize(size.width, 50)))
             transition.updateAlpha(view: view, alpha: 1 - progress)
@@ -1737,6 +1744,7 @@ public class PeerListContainerView : Control {
                 transition.updateAlpha(view: view, alpha: 1 - progress)
             }
         }
+        self.backButton?.isHidden = !tauGhostButton.isHidden && !inlineBackButton && progress >= 0.5 // Taugram
 
         if let view = self.webapps {
             transition.updateFrame(view: view, frame: CGRect(origin: NSMakePoint(10, floorToScreenPixels((50 - view.frame.height) / 2)), size: view.frame.size))
@@ -1748,7 +1756,7 @@ public class PeerListContainerView : Control {
         } else {
             storiesShift = 0
         }
-        let titlePlusStoryMinX = arguments.navigationBarLeftPosition() + 8 - storiesShift
+        let titlePlusStoryMinX = max(arguments.navigationBarLeftPosition() + 8 - storiesShift, tauGhostButton.isHidden ? 0 : tauGhostButton.frame.maxX + 4) // Taugram
         let titlePlusStoryMaxX = controlPoint.x - 4
         titleView.displaysStatus = storiesItem == nil || titlePlusStoryMinX + 59 + titleView.size(displayingStatus: true).width <= titlePlusStoryMaxX
 

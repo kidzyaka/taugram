@@ -23,7 +23,7 @@ public func canTranscribeMessage(_ message: Message, context: any AccountContext
         return false
     }
     let file = message.media.first! as! TelegramMediaFile
-    if context.isPremium {
+    if context.isPremium || tauTranscribesLocally(message) { // Taugram
         return true
     } else {
         let has_trial = context.appConfiguration.getGeneralValue("transcribe_audio_trial_weekly_number", orElse: 0) > 0

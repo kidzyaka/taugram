@@ -392,7 +392,7 @@ public func messageFileSaveMenuItem(file: TelegramMediaFile, context: any Accoun
     }, itemImage: MenuAnimation.menu_save_as.value, keyEquivalent: keyEquivalent)
 }
 
-public func chatMenuItems(for message: Message, entry: ChatHistoryEntry?, textLayout: (TextViewLayout?, LinkType?)?, chatInteraction: ChatInteraction, useGroupIfNeeded: Bool = true, fromAdPromo: Bool = false, source: ChatMenuItemSource = .general) -> Signal<[ContextMenuItem], NoError> {
+public func chatMenuItems(for message: Message, entry: ChatHistoryEntry?, textLayout: (TextViewLayout?, LinkType?)?, chatInteraction: ChatInteraction, useGroupIfNeeded: Bool = true, fromAdPromo: Bool = false, source: ChatMenuItemSource = .general, tauUnfiltered: Bool = false) -> Signal<[ContextMenuItem], NoError> { // Taugram
     
     if chatInteraction.interactionContext.isFrozen {
         return .complete()
@@ -423,7 +423,7 @@ public func chatMenuItems(for message: Message, entry: ChatHistoryEntry?, textLa
         let account = context.account
         let mode = chatInteraction.mode
         let isIncoming = data.message.isIncoming(context.account, false)
-        let translateConfig = AppConfigTranslateState(rawValue: context.appConfiguration.getStringValue("translations_manual_enabled", orElse: "enabled")) ?? .disabled
+        let translateConfig = TauCoreSettings.shared.usesGoogleTranslation ? AppConfigTranslateState.alternative : (AppConfigTranslateState(rawValue: context.appConfiguration.getStringValue("translations_manual_enabled", orElse: "enabled")) ?? .disabled) // Taugram
         var isService = data.message.extendedMedia is TelegramMediaAction || mode.isSavedMode || mode == .preview || chatInteraction.isLogInteraction
         
 
@@ -1640,13 +1640,13 @@ public func chatMenuItems(for message: Message, entry: ChatHistoryEntry?, textLa
             }
         }
 
-        let blocks:[[ContextMenuItem]] = [zeroBlock, firstBlock,
+        let blocks:[[ContextMenuItem]] = tauFilterMessageMenu(enabled: !tauUnfiltered, [zeroBlock, firstBlock, // Taugram
                                           add_secondBlock,
                                           thirdBlock,
                                           secondBlock,
                                           fourthBlock,
                                           fifthBlock,
-                                          sixBlock, sevenBlock].filter { !$0.isEmpty }
+                                          sixBlock, sevenBlock]).filter { !$0.isEmpty } // Taugram
         
         for (i, block) in blocks.enumerated() {
             if i == 0 {

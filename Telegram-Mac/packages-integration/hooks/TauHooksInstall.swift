@@ -14,8 +14,32 @@ import TelegramUtils
 import TauSettings
 import AlertsUI
 import SwiftSignalKit
+import Translate
 
 private let tauSettingsIcon = generateTauSettingsIcon()
+
+private final class TauGoogleTranslationService: ExperimentalInternalTranslationService {
+    func translate(texts: [AnyHashable: String], fromLang: String, toLang: String) -> Signal<[AnyHashable: String]?, NoError> {
+        var signal: Signal<[AnyHashable: String], NoError> = .single([:])
+        for (key, text) in texts {
+            signal = signal |> mapToSignal { current -> Signal<[AnyHashable: String], NoError> in
+                if text.isEmpty {
+                    return .single(current)
+                }
+                return Translate.translateText(text: text, from: fromLang == "auto" ? nil : fromLang, to: toLang)
+                |> map { value -> [AnyHashable: String] in
+                    var current = current
+                    current[key] = value.result
+                    return current
+                }
+                |> `catch` { _ -> Signal<[AnyHashable: String], NoError> in
+                    return .single(current)
+                }
+            }
+        }
+        return signal |> map { Optional($0) }
+    }
+}
 
 func installTaugramSettingsHooks(_ hooks: inout SettingsNavigationHooks) {
     var tauHooks = TauSettingsUIHooks()
@@ -23,6 +47,7 @@ func installTaugramSettingsHooks(_ hooks: inout SettingsNavigationHooks) {
         return makeTauChatPreviewItems(size: size, context: context, theme: theme)
     }
     TauSettingsUIHooks.install(tauHooks)
+    engineExperimentalInternalTranslationService = TauGoogleTranslationService()
     themeSettingsUpdateGuard = { current, updated in
         return tauOLEDThemeGuard(current: current, updated: updated)
     }

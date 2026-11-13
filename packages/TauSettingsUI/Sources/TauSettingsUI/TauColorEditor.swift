@@ -253,6 +253,7 @@ private struct State: Equatable {
     var parentName: String
     var editing: String?
     var oledMode: Bool
+    var bubbleRadius: Int
 }
 
 private func swatch(_ color: NSColor) -> CGImage? {
@@ -277,6 +278,7 @@ private let _id_export = InputDataIdentifier("_id_export")
 private let _id_import = InputDataIdentifier("_id_import")
 private let _id_reset = InputDataIdentifier("_id_reset")
 private let _id_preview = InputDataIdentifier("_id_preview")
+private let _id_bubble_radius = InputDataIdentifier("_id_bubble_radius")
 private let _id_gradient_add = InputDataIdentifier("_id_gradient_add")
 private let _id_gradient_remove = InputDataIdentifier("_id_gradient_remove")
 
@@ -288,9 +290,30 @@ private func entries(_ state: State, context: any AccountContextProtocol, argume
     entries.append(.sectionId(sectionId, type: .normal))
     sectionId += 1
 
-    entries.append(.custom(sectionId: sectionId, index: index, value: .none, identifier: _id_preview, equatable: InputDataEquatable(state.text), comparable: nil, item: { initialSize, stableId in
+    entries.append(.custom(sectionId: sectionId, index: index, value: .none, identifier: _id_preview, equatable: InputDataEquatable(state.text + "\(state.bubbleRadius)"), comparable: nil, item: { initialSize, stableId in
         return TauChatPreviewRowItem(initialSize, stableId: stableId, context: context)
     }))
+    index += 1
+
+    entries.append(.sectionId(sectionId, type: .normal))
+    sectionId += 1
+
+    let radiusItems: [ContextMenuItem] = [0, 4, 8, 12, 16, 20, 24].map { value in
+        //TODOLANG
+        let title = value == 16 ? "\(value) (Default)" : "\(value)"
+        return ContextMenuItem(title, handler: {
+            TauSettings.shared.update { current in
+                var current = current
+                current.bubbleRadius = value
+                return current
+            }
+        }, state: value == state.bubbleRadius ? .on : nil)
+    }
+    //TODOLANG
+    entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_bubble_radius, data: .init(name: "Bubble Corners", color: theme.colors.text, type: .contextSelector("\(state.bubbleRadius)", radiusItems), viewType: .singleItem)))
+    index += 1
+    //TODOLANG
+    entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Corner radius of message bubbles, in points."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
     index += 1
 
     entries.append(.sectionId(sectionId, type: .normal))
@@ -490,14 +513,15 @@ public func TauColorEditorController(context: any AccountContextProtocol) -> Inp
     })
 
     let paletteSignal = appearanceSignal |> map { _ in tauPaletteText(theme.colors) } |> distinctUntilChanged
-    let signal = combineLatest(paletteSignal, editing.get(), TauSettings.shared.signal |> map { $0.oledMode } |> distinctUntilChanged) |> map { text, editing, oledMode in
-        return State(keys: paletteKeys(text), gradient: gradientValues(text), text: text, paletteName: theme.colors.name, parentName: theme.colors.parent.palette.name, editing: editing, oledMode: oledMode)
+    let settings = TauSettings.shared.signal |> map { ($0.oledMode, $0.bubbleRadius) } |> distinctUntilChanged(isEqual: { $0 == $1 })
+    let signal = combineLatest(paletteSignal, editing.get(), settings) |> map { text, editing, settings in
+        return State(keys: paletteKeys(text), gradient: gradientValues(text), text: text, paletteName: theme.colors.name, parentName: theme.colors.parent.palette.name, editing: editing, oledMode: settings.0, bubbleRadius: settings.1)
     } |> deliverOnPrepareQueue |> map { state in
         return InputDataSignalValue(entries: entries(state, context: context, arguments: arguments))
     }
 
     //TODOLANG
-    let controller = InputDataController(dataSignal: signal, title: "Color Editor", hasDone: false, identifier: "taugram-colors")
+    let controller = InputDataController(dataSignal: signal, title: "Theme Editor", hasDone: false, identifier: "taugram-colors")
 
     getController = { [weak controller] in
         return controller

@@ -1,5 +1,6 @@
 import Cocoa
 import TGUIKit
+import TauSettings
 import Postbox
 import TelegramCore
 import KeyboardKey
@@ -433,13 +434,7 @@ public class QuickSwitcherModalController: ModalViewController, TableViewDelegat
                         return search.request.isEmpty || value.peer.displayTitle.lowercased().contains(search.request.lowercased())
                     }
                     
-                    let accountsLimit: Int = normalAccountsLimit
-                    let effectiveLimit: Int
-                    if context.premiumIsBlocked {
-                        effectiveLimit = accountsLimit
-                    } else {
-                        effectiveLimit = accountsLimit + 1
-                    }
+                    let effectiveLimit: Int = TauSettings.accountsLimit // Taugram
                     
                     let canAddAccount = effectiveLimit > peers.count
                     
@@ -600,14 +595,7 @@ public class QuickSwitcherModalController: ModalViewController, TableViewDelegat
                 }
                 return true
             })
-            let hasPremium = accounts.contains(where: { $0.isPremium })
-            if accounts.count == normalAccountsLimit {
-                if hasPremium {
-                    context.sharedContext.beginNewAuth(testingEnvironment: false)
-                } else {
-                    QuickSwitcherHooks.shared.showAccountsLimit(context, accounts.count)
-                }
-            } else {
+            if accounts.count < TauSettings.accountsLimit { // Taugram
                 context.sharedContext.beginNewAuth(testingEnvironment: false)
             }
             close()

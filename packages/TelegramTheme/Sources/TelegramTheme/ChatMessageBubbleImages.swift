@@ -10,10 +10,22 @@ public enum MessageBubbleImageNeighbors: Hashable {
     case extracted
 }
 
-let messageBubbleMainRadius: CGFloat = 16.0
-let messageBubbleAuxiliaryRadius: CGFloat = 8.0
+private(set) var messageBubbleMainRadius: CGFloat = 16.0 // Taugram
+private(set) var messageBubbleAuxiliaryRadius: CGFloat = 8.0 // Taugram
 let messageBubbleTailWidth: CGFloat = 6.0
-let messageBubbleDiameter: CGFloat = 32.0
+private(set) var messageBubbleDiameter: CGFloat = 32.0 // Taugram
+
+func tauSetMessageBubbleRadius(_ radius: CGFloat) -> Bool {
+    let radius = max(0, min(radius, 24))
+    guard radius != messageBubbleMainRadius else {
+        return false
+    }
+    messageBubbleMainRadius = radius
+    messageBubbleAuxiliaryRadius = min(radius, max(2, (radius / 2).rounded()))
+    messageBubbleDiameter = max(32, radius * 2)
+    clearMessageBubbleImageCache()
+    return true
+}
 
 private let minRadiusForFullTailCorner: CGFloat = 14.0
 
