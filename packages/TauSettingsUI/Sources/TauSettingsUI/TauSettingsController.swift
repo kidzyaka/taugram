@@ -111,6 +111,7 @@ private let _id_bypass_protection = InputDataIdentifier("_id_bypass_protection")
 private let _id_view_once = InputDataIdentifier("_id_view_once")
 private let _id_show_self_destructing = InputDataIdentifier("_id_show_self_destructing")
 private let _id_view_once_secret = InputDataIdentifier("_id_view_once_secret")
+private let _id_hidden_last_seen = InputDataIdentifier("_id_hidden_last_seen")
 private func _id_ghost(_ key: String) -> InputDataIdentifier {
     return InputDataIdentifier("_id_ghost_\(key)")
 }
@@ -447,6 +448,23 @@ private func entries(_ state: State, arguments: Arguments) -> [InputDataEntry] {
 
             //TODOLANG
             entries.append(.desc(sectionId: sectionId, index: index, text: .plain("Messages that others delete stay in the chat with a \"deleted\" mark. Earlier versions of edited messages are kept on this Mac; right-click a message to see them. Only what this Mac receives while running is saved."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
+            index += 1
+
+            entries.append(.sectionId(sectionId, type: .normal))
+            sectionId += 1
+
+            //TODOLANG
+            entries.append(.desc(sectionId: sectionId, index: index, text: .plain("LAST SEEN"), data: .init(color: theme.colors.listGrayText, viewType: .textTopItem)))
+            index += 1
+
+            //TODOLANG
+            entries.append(.general(sectionId: sectionId, index: index, value: .none, error: nil, identifier: _id_hidden_last_seen, data: .init(name: "Track Hidden Last Seen", color: theme.colors.text, type: .switchable(state.values.trackHiddenLastSeen), viewType: .singleItem, action: {
+                arguments.toggleValue(\.trackHiddenLastSeen)
+            })))
+            index += 1
+
+            //TODOLANG
+            entries.append(.desc(sectionId: sectionId, index: index, text: .plain("For people who hide their last seen, shows the last time this Mac saw them active instead of \"recently\": a new message from them in any shared chat, typing, or reading your message in a private chat. Marked with ≈ because they may have been online later somewhere you can't see. Only what this Mac receives while running is counted."), data: .init(color: theme.colors.listGrayText, viewType: .textBottomItem)))
             index += 1
 
             entries.append(.sectionId(sectionId, type: .normal))

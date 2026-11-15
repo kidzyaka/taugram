@@ -112,14 +112,55 @@ public func userPresenceText(_ presence: TelegramUserPresence, timeDifference: T
         let activeUntil = presence.lastActivity - Int32(timeDifference) + 30
         if activeUntil >= timestamp {
             return (strings().peerStatusOnline, true, customTheme?.accentColor ?? theme.colors.accent)
+        } else if let observed = tauObservedLastSeenText(presence, timeDifference: timeDifference, relativeTo: timestamp, expanded: expanded, customTheme: customTheme) {
+            return observed
         } else {
             return (strings().peerStatusRecently, false, customTheme?.grayTextColor ?? theme.colors.grayText)
         }
     case .lastWeek:
+        if let observed = tauObservedLastSeenText(presence, timeDifference: timeDifference, relativeTo: timestamp, expanded: expanded, customTheme: customTheme) {
+            return observed
+        }
         return (strings().peerStatusLastWeek, false, customTheme?.grayTextColor ?? theme.colors.grayText)
     case .lastMonth:
+        if let observed = tauObservedLastSeenText(presence, timeDifference: timeDifference, relativeTo: timestamp, expanded: expanded, customTheme: customTheme) {
+            return observed
+        }
         return (strings().peerStatusLastMonth, false, customTheme?.grayTextColor ?? theme.colors.grayText)
     }
+}
+
+private func tauObservedLastSeenBound(_ status: UserPresenceStatus) -> Int32? {
+    switch status {
+    case .recently:
+        return 3 * 24 * 60 * 60
+    case .lastWeek:
+        return 7 * 24 * 60 * 60
+    case .lastMonth:
+        return 31 * 24 * 60 * 60
+    case .none, .present:
+        return nil
+    }
+}
+
+public func tauObservedLastSeen(_ presence: TelegramUserPresence, timeDifference: TimeInterval, relativeTo timestamp: Int32) -> Int32? {
+    guard TauCoreSettings.shared.tracksHiddenLastSeen, presence.lastActivity > 0, let bound = tauObservedLastSeenBound(presence.status) else {
+        return nil
+    }
+    let observed = Int32(clamping: Int(presence.lastActivity) - Int(timeDifference))
+    guard timestamp - observed <= bound else {
+        return nil
+    }
+    return observed
+}
+
+private func tauObservedLastSeenText(_ presence: TelegramUserPresence, timeDifference: TimeInterval, relativeTo timestamp: Int32, expanded: Bool, customTheme: UserPresenceColors?) -> (String, Bool, NSColor)? {
+    guard tauObservedLastSeen(presence, timeDifference: timeDifference, relativeTo: timestamp) != nil else {
+        return nil
+    }
+    let observed = TelegramUserPresence(status: .present(until: presence.lastActivity), lastActivity: 0)
+    let (text, _, color) = userPresenceText(observed, timeDifference: timeDifference, relativeTo: timestamp, expanded: expanded, customTheme: customTheme)
+    return ("≈ \(text)", false, color)
 }
 
 public func userPresenceStringRefreshTimeout(_ presence: TelegramUserPresence, timeDifference: Int32, relativeTo timestamp: Int32) -> Double {
@@ -148,11 +189,17 @@ public func userPresenceStringRefreshTimeout(_ presence: TelegramUserPresence, t
         let activeUntil = presence.lastActivity - timeDifference + 30
         if activeUntil >= timestamp {
             return Double(activeUntil - timestamp + 1)
+        } else if tauObservedLastSeen(presence, timeDifference: TimeInterval(timeDifference), relativeTo: timestamp) != nil {
+            return userPresenceStringRefreshTimeout(TelegramUserPresence(status: .present(until: presence.lastActivity - timeDifference), lastActivity: 0), timeDifference: timeDifference, relativeTo: timestamp)
         } else {
             return Double.infinity
         }
-
-    case .none, .lastWeek, .lastMonth:
+    case .lastWeek, .lastMonth:
+        if tauObservedLastSeen(presence, timeDifference: TimeInterval(timeDifference), relativeTo: timestamp) != nil {
+            return userPresenceStringRefreshTimeout(TelegramUserPresence(status: .present(until: presence.lastActivity - timeDifference), lastActivity: 0), timeDifference: timeDifference, relativeTo: timestamp)
+        }
+        return Double.infinity
+    case .none:
         return Double.infinity
     }
 }

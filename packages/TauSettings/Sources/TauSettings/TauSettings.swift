@@ -77,6 +77,7 @@ public struct TauSettingsValues: Codable, Equatable {
     public var localTranscription: Bool = false
     public var googleTranslation: Bool = false
     public var transcriptionModel: String = "system"
+    public var trackHiddenLastSeen: Bool = false
 
     public init() {
     }
@@ -113,6 +114,7 @@ public struct TauSettingsValues: Codable, Equatable {
         self.localTranscription = try container.decodeIfPresent(Bool.self, forKey: .localTranscription) ?? false
         self.googleTranslation = try container.decodeIfPresent(Bool.self, forKey: .googleTranslation) ?? false
         self.transcriptionModel = try container.decodeIfPresent(String.self, forKey: .transcriptionModel) ?? "system"
+        self.trackHiddenLastSeen = try container.decodeIfPresent(Bool.self, forKey: .trackHiddenLastSeen) ?? false
     }
 
     public var hasValidDangerousConsent: Bool {
@@ -138,7 +140,7 @@ public struct TauSettingsValues: Codable, Equatable {
         for (id, ghost) in self.ghostByAccount {
             ghostByAccount[PeerId(id)] = ghost.coreFlags
         }
-        return TauCoreFlags(dangerousFeaturesAllowed: self.dangerousFeaturesAllowed, ghost: self.ghost.coreFlags, ghostByAccount: ghostByAccount, keepDeletedMessages: self.keepDeletedMessages, keepEditHistory: self.keepEditHistory, bypassContentProtection: self.bypassContentProtection, viewOnceWithoutMarking: self.viewOnceWithoutMarking, viewOnceInSecretChats: self.viewOnceInSecretChats, fasterTransfers: self.fasterTransfers, googleTranslation: self.googleTranslation)
+        return TauCoreFlags(dangerousFeaturesAllowed: self.dangerousFeaturesAllowed, ghost: self.ghost.coreFlags, ghostByAccount: ghostByAccount, keepDeletedMessages: self.keepDeletedMessages, keepEditHistory: self.keepEditHistory, bypassContentProtection: self.bypassContentProtection, viewOnceWithoutMarking: self.viewOnceWithoutMarking, viewOnceInSecretChats: self.viewOnceInSecretChats, fasterTransfers: self.fasterTransfers, googleTranslation: self.googleTranslation, trackHiddenLastSeen: self.trackHiddenLastSeen)
     }
 }
 

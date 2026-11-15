@@ -269,6 +269,18 @@ index cf1ab15d9cfae956abcb53bf5060db525b32448d..07a894a063943e0337823d07e9d5f4c8
          })
          // A fetch in flight may be bringing the message with its old content, over the edited one or, with none stored
          // here, instead of it; it stores this edit in its place (Postbox's record of recent edits,
+diff --git a/submodules/TelegramCore/Sources/State/Sync/StateReplay+Typing.swift b/submodules/TelegramCore/Sources/State/Sync/StateReplay+Typing.swift
+index 6219a0cd4bc9eb724fa487c793cf7b4d6b70ce8b..d87a71941b624861389ff636a6e873f7ea70ecbe 100644
+--- a/submodules/TelegramCore/Sources/State/Sync/StateReplay+Typing.swift
++++ b/submodules/TelegramCore/Sources/State/Sync/StateReplay+Typing.swift
+@@ -9,6 +9,7 @@ import EncryptionProvider
+ extension ReplayContext {
+     func applyAddPeerInputActivity(_ chatPeerId: PeerActivitySpace, _ peerId: PeerId?, _ activity: PeerInputActivity?) {
+         if let peerId = peerId {
++            tauRecordInputActivity(peerId: peerId, activity: activity, into: &peerActivityTimestamps) // Taugram
+             if updatedTypingActivities[chatPeerId] == nil {
+                 updatedTypingActivities[chatPeerId] = [peerId: activity]
+             } else {
 diff --git a/submodules/TelegramCore/Sources/State/SynchronizePeerReadState.swift b/submodules/TelegramCore/Sources/State/SynchronizePeerReadState.swift
 index b2e65895ccd2f29f003474b051fee81c6f3819ed..1e172d9feb5355a929d565b63b621bd0e7689c44 100644
 --- a/submodules/TelegramCore/Sources/State/SynchronizePeerReadState.swift
@@ -315,10 +327,10 @@ index 91c5c772f3abbc45895387981e3f960ac2628938..555ee97852875c1b75d8294d8a4576ce
                  if let attribute = attribute as? AudioTranscriptionMessageAttribute {
 diff --git a/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift b/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift
 new file mode 100644
-index 0000000000000000000000000000000000000000..8f17f6903884c0a8a031d869725a22e7bc5de590
+index 0000000000000000000000000000000000000000..18f71050d9378fb47fc829206c1cb1b83622cdcf
 --- /dev/null
 +++ b/submodules/TelegramCore/Sources/Tau/TauCoreSettings.swift
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,129 @@
 +import Foundation
 +import Postbox
 +
@@ -357,8 +369,9 @@ index 0000000000000000000000000000000000000000..8f17f6903884c0a8a031d869725a22e7
 +    public var viewOnceInSecretChats: Bool
 +    public var fasterTransfers: Bool
 +    public var googleTranslation: Bool
++    public var trackHiddenLastSeen: Bool
 +
-+    public init(dangerousFeaturesAllowed: Bool = false, ghost: TauGhostFlags = .off, ghostByAccount: [PeerId: TauGhostFlags] = [:], keepDeletedMessages: Bool = false, keepEditHistory: Bool = false, bypassContentProtection: Bool = false, viewOnceWithoutMarking: Bool = false, viewOnceInSecretChats: Bool = false, fasterTransfers: Bool = false, googleTranslation: Bool = false) {
++    public init(dangerousFeaturesAllowed: Bool = false, ghost: TauGhostFlags = .off, ghostByAccount: [PeerId: TauGhostFlags] = [:], keepDeletedMessages: Bool = false, keepEditHistory: Bool = false, bypassContentProtection: Bool = false, viewOnceWithoutMarking: Bool = false, viewOnceInSecretChats: Bool = false, fasterTransfers: Bool = false, googleTranslation: Bool = false, trackHiddenLastSeen: Bool = false) {
 +        self.dangerousFeaturesAllowed = dangerousFeaturesAllowed
 +        self.ghost = ghost
 +        self.ghostByAccount = ghostByAccount
@@ -369,6 +382,7 @@ index 0000000000000000000000000000000000000000..8f17f6903884c0a8a031d869725a22e7
 +        self.viewOnceInSecretChats = viewOnceInSecretChats
 +        self.fasterTransfers = fasterTransfers
 +        self.googleTranslation = googleTranslation
++        self.trackHiddenLastSeen = trackHiddenLastSeen
 +    }
 +}
 +
@@ -440,6 +454,11 @@ index 0000000000000000000000000000000000000000..8f17f6903884c0a8a031d869725a22e7
 +    public var usesGoogleTranslation: Bool {
 +        return self.current.googleTranslation
 +    }
++
++    public var tracksHiddenLastSeen: Bool {
++        let flags = self.current
++        return flags.dangerousFeaturesAllowed && flags.trackHiddenLastSeen
++    }
 +}
 diff --git a/submodules/TelegramCore/Sources/Tau/TauGhostNetwork.swift b/submodules/TelegramCore/Sources/Tau/TauGhostNetwork.swift
 new file mode 100644
@@ -469,6 +488,21 @@ index 0000000000000000000000000000000000000000..a4186c9cc06cc05b88903f555b28530a
 +    func tauGhost(_ keyPath: KeyPath<TauGhostFlags, Bool>) -> TauGhostNetwork {
 +        return TauGhostNetwork(network: self, blocked: TauCoreSettings.shared.ghost[keyPath: keyPath])
 +    }
++}
+diff --git a/submodules/TelegramCore/Sources/Tau/TauLastSeen.swift b/submodules/TelegramCore/Sources/Tau/TauLastSeen.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..af6d32627ab839a131e86717f2178979e3712dc5
+--- /dev/null
++++ b/submodules/TelegramCore/Sources/Tau/TauLastSeen.swift
+@@ -0,0 +1,9 @@
++import Foundation
++import Postbox
++
++func tauRecordInputActivity(peerId: PeerId, activity: PeerInputActivity?, into timestamps: inout [PeerId: Int32]) {
++    guard activity != nil, peerId.namespace == Namespaces.Peer.CloudUser, TauCoreSettings.shared.tracksHiddenLastSeen else {
++        return
++    }
++    recordPeerActivityTimestamp(peerId: peerId, timestamp: Int32(Date().timeIntervalSince1970), into: &timestamps)
 +}
 diff --git a/submodules/TelegramCore/Sources/Tau/TauMessageHistory.swift b/submodules/TelegramCore/Sources/Tau/TauMessageHistory.swift
 new file mode 100644
